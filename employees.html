@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý nhân sự - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .avatar-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .emp-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .emp-name {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    .emp-phone {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🍗</div>
+        <div><div class="brand-name">Gà Mẹt Cẩm Phả</div><div class="brand-sub">Quản lý nhân sự</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Tổng quan</div>
+      <a href="dashboard.html" class="nav-item admin-only"><i class="fas fa-th-large"></i> Dashboard</a>
+      
+      <div class="nav-label">Nhân sự</div>
+      <a href="employees.html" class="nav-item active admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+      <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+      <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+      <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+      
+      <div class="nav-label">Tài chính</div>
+      <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+      
+      <div class="nav-label">Hệ thống</div>
+      <a href="reports.html" class="nav-item"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+      <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i> Cài đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-panel">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="sidebarName">...</div>
+          <div class="user-role" id="sidebarRole">...</div>
+        </div>
+        <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <div class="page-title">Nhân viên</div>
+        <div class="page-subtitle" id="empCountSubtitle">0 nhân viên</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openEmpModal()"><i class="fas fa-plus"></i> Thêm nhân viên</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="filter-bar" style="display:flex; gap:12px; flex-wrap:wrap;">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="searchEmp" class="form-control" placeholder="Tìm tên, mã NV..." oninput="renderEmpTable()">
+            </div>
+            <select id="filterStore" class="form-control" onchange="renderEmpTable()" style="width:200px;">
+              <option value="all">Tất cả cơ sở</option>
+            </select>
+            <select id="filterStatus" class="form-control" onchange="renderEmpTable()" style="width:150px;">
+              <option value="all">Tất cả trạng thái</option>
+              <option value="true">Đang làm việc</option>
+              <option value="false">Đã nghỉ việc</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="empTable">
+            <thead>
+              <tr>
+                <th>Nhân viên</th>
+                <th>Mã NV</th>
+                <th>Cơ sở làm việc</th>
+                <th>Vị trí</th>
+                <th>Loại HĐ</th>
+                <th>Lương cơ bản</th>
+                <th>Trạng thái</th>
+                <th style="text-align: right">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Employee Modal -->
+  <div class="modal-overlay" id="empModal">
+    <div class="modal" style="width: 600px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="empModalTitle">Thêm nhân viên</h3>
+        <button class="modal-close" onclick="Modal.close('empModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(1)" id="tabBtn1">Cơ bản</button>
+          <button class="tab-btn" onclick="switchTab(2)" id="tabBtn2">Hợp đồng</button>
+          <button class="tab-btn" onclick="switchTab(3)" id="tabBtn3">Tài khoản & Ca</button>
+        </div>
+
+        <form id="empForm" onsubmit="event.preventDefault(); saveEmployee();">
+          <input type="hidden" id="empId">
+          
+          <!-- Tab 1: Basic Info -->
+          <div id="tabContent1">
+            <div class="form-group">
+              <label class="form-label">Tên nhân viên <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="empName" class="form-control" required>
+            </div>
+            <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div class="form-group">
+                <label class="form-label">Mã NV <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="empCode" class="form-control" required placeholder="Ví dụ: NV001">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số điện thoại</label>
+                <input type="text" id="empPhone" class="form-control">
+              </div>
+            </div>
+            <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div class="form-group">
+                <label class="form-label">Vị trí</label>
+                <input type="text" id="empPosition" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ngày vào làm</label>
+                <input type="date" id="empStartDate" class="form-control">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cơ sở làm việc <span style="color:var(--danger)">*</span></label>
+              <select id="empStoreId" class="form-control" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trạng thái</label>
+              <select id="empActive" class="form-control">
+                <option value="true">Đang làm việc</option>
+                <option value="false">Đã nghỉ việc</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tab 2: Contract -->
+          <div id="tabContent2" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Loại hợp đồng <span style="color:var(--danger)">*</span></label>
+              <select id="empContractType" class="form-control" onchange="toggleSalaryFields()" required>
+                <option value="hourly">Theo giờ (Part-time)</option>
+                <option value="shift">Theo ca (Full-time ca)</option>
+                <option value="fixed">Cố định tháng</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="groupHourly">
+              <label class="form-label">Lương theo giờ (VNĐ/giờ)</label>
+              <input type="number" id="empHourlyRate" class="form-control" placeholder="Ví dụ: 25000">
+            </div>
+            <div class="form-group" id="groupShift" style="display:none;">
+              <label class="form-label">Lương theo ca (VNĐ/ca)</label>
+              <input type="number" id="empShiftRate" class="form-control" placeholder="Ví dụ: 200000">
+            </div>
+            <div class="form-group" id="groupFixed" style="display:none;">
+              <label class="form-label">Lương cố định tháng (VNĐ/tháng)</label>
+              <input type="number" id="empFixedSalary" class="form-control" placeholder="Ví dụ: 8000000">
+            </div>
+
+            <h4 style="margin-bottom: 12px; margin-top: 24px;">Phụ cấp cố định (VNĐ/tháng)</h4>
+            <div class="form-row-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Ăn uống</label>
+                <input type="number" id="empAllowFood" class="form-control" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Đi lại</label>
+                <input type="number" id="empAllowTransport" class="form-control" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Khác</label>
+                <input type="number" id="empAllowOther" class="form-control" value="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Account & Shifts -->
+          <div id="tabContent3" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Tên đăng nhập (Username)</label>
+              <input type="text" id="empUsername" class="form-control">
+              <div class="form-hint">Dùng để nhân viên tự đăng nhập vào hệ thống</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mật khẩu</label>
+              <input type="password" id="empPassword" class="form-control">
+              <div class="form-hint" id="empPwdHint">Để trống nếu không muốn đổi mật khẩu (khi sửa)</div>
+            </div>
+
+            <h4 style="margin-bottom: 12px; margin-top: 24px;">Ca làm việc mặc định</h4>
+            <div class="form-hint" style="margin-bottom: 12px;">Chọn các ca nhân viên này thường làm</div>
+            <div id="empShiftsContainer" style="display:flex; flex-direction:column; gap:8px;">
+              <!-- Checkboxes rendered here -->
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modal.close('empModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="document.getElementById('empForm').requestSubmit()">Lưu nhân viên</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  
+  <script>
+    // Init
+    seedData();
+    const session = requireAdmin();
+    let currentEmployees = [];
+    
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+      
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      
+      const pending = Storage.getPendingAdvances().length;
+      if (pending > 0) {
+        const navAdv = document.getElementById('navAdvances');
+        if (navAdv) navAdv.innerHTML += `<span class="nav-badge">${pending}</span>`;
+      }
+      initSidebar();
+      initPage();
+    }
+
+    function initPage() {
+      renderStoreFilterOptions();
+      renderEmpTable();
+      renderShiftsCheckbox();
+    }
+
+    function renderStoreFilterOptions() {
+      const storeSel = document.getElementById('filterStore');
+      if (!storeSel) return;
+      const stores = Storage.getStores(true);
+      const currentVal = storeSel.value || 'all';
+      storeSel.innerHTML = `<option value="all">Tất cả cơ sở (${stores.length})</option>` + stores.map(s => `
+        <option value="${s.id}">${s.code} - ${s.name}</option>
+      `).join('');
+      storeSel.value = currentVal;
+    }
+
+    function renderStoreSelectOptions(selectedStoreId = '') {
+      const storeSel = document.getElementById('empStoreId');
+      if (!storeSel) return;
+      const stores = Storage.getStores(true);
+      storeSel.innerHTML = stores.map(s => `
+        <option value="${s.id}">${s.code} - ${s.name}</option>
+      `).join('');
+      if (selectedStoreId) storeSel.value = selectedStoreId;
+      else if (stores.length > 0) storeSel.value = stores[0].id;
+    }
+
+    function renderShiftsCheckbox() {
+      const container = document.getElementById('empShiftsContainer');
+      const shifts = Storage.getShifts();
+      container.innerHTML = shifts.map(s => `
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="empShifts" value="${s.id}">
+          <span>${s.name} (${s.startTime} - ${s.endTime})</span>
+        </label>
+      `).join('');
+    }
+
+    function renderEmpTable() {
+      const tbody = document.querySelector('#empTable tbody');
+      const q = document.getElementById('searchEmp').value.toLowerCase();
+      const statusFilter = document.getElementById('filterStatus').value;
+      const storeFilter = document.getElementById('filterStore') ? document.getElementById('filterStore').value : 'all';
+      
+      let employees = Storage.getEmployees(false);
+      currentEmployees = employees;
+      
+      let filtered = employees.filter(emp => {
+        const matchQ = emp.name.toLowerCase().includes(q) || (emp.code && emp.code.toLowerCase().includes(q));
+        const matchS = statusFilter === 'all' ? true : (emp.active === (statusFilter === 'true'));
+        const empStore = emp.store_id || emp.storeId;
+        const matchStore = storeFilter === 'all' ? true : (empStore === storeFilter);
+        return matchQ && matchS && matchStore;
+      });
+
+      document.getElementById('empCountSubtitle').textContent = `${filtered.length} nhân viên`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Không tìm thấy nhân viên nào</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(emp => {
+        const salaryText = formatSalaryText(emp);
+        const statusBadge = emp.active 
+          ? `<span class="badge badge-success">Đang làm việc</span>` 
+          : `<span class="badge badge-neutral">Đã nghỉ việc</span>`;
+          
+        const storeObj = Storage.getStore(emp.store_id || emp.storeId) || { code: '---', name: 'Chưa gán' };
+        const storeBadge = `<span class="badge badge-info" title="${storeObj.name}"><i class="fas fa-store"></i> ${storeObj.code || storeObj.name}</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div class="avatar-cell">
+                <div class="avatar-sm">${Utils.initials(emp.name)}</div>
+                <div class="emp-info">
+                  <div class="emp-name">${emp.name}</div>
+                  <div class="emp-phone">${emp.phone || '---'}</div>
+                </div>
+              </div>
+            </td>
+            <td>${emp.code || '---'}</td>
+            <td>${storeBadge}</td>
+            <td>${emp.position || '---'}</td>
+            <td>${Utils.contractLabel(emp.contractType)}</td>
+            <td>${salaryText}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right">
+              <button class="btn btn-icon btn-ghost" onclick="editEmployee('${emp.id}')" title="Sửa thông tin / Luân chuyển cơ sở"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-icon btn-ghost" style="color:var(--danger)" onclick="deleteEmployee('${emp.id}')" title="Xóa"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatSalaryText(emp) {
+      if (emp.contractType === 'hourly') return `${Utils.currency(emp.hourlyRate || 0)} / giờ`;
+      if (emp.contractType === 'shift') return `${Utils.currency(emp.shiftRate || 0)} / ca`;
+      if (emp.contractType === 'fixed') return `${Utils.currency(emp.fixedSalary || 0)} / tháng`;
+      return '---';
+    }
+
+    function switchTab(num) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tabBtn${num}`).classList.add('active');
+      document.getElementById('tabContent1').style.display = num === 1 ? 'block' : 'none';
+      document.getElementById('tabContent2').style.display = num === 2 ? 'block' : 'none';
+      document.getElementById('tabContent3').style.display = num === 3 ? 'block' : 'none';
+    }
+
+    function toggleSalaryFields() {
+      const type = document.getElementById('empContractType').value;
+      document.getElementById('groupHourly').style.display = type === 'hourly' ? 'block' : 'none';
+      document.getElementById('groupShift').style.display = type === 'shift' ? 'block' : 'none';
+      document.getElementById('groupFixed').style.display = type === 'fixed' ? 'block' : 'none';
+    }
+
+    function openEmpModal() {
+      document.getElementById('empForm').reset();
+      document.getElementById('empId').value = '';
+      document.getElementById('empModalTitle').textContent = 'Thêm nhân viên';
+      document.getElementById('empActive').value = 'true';
+      document.getElementById('empPwdHint').style.display = 'none';
+      
+      const defaultStore = Storage.currentStoreId && Storage.currentStoreId !== 'all' ? Storage.currentStoreId : '';
+      renderStoreSelectOptions(defaultStore);
+
+      // Default shift
+      const shifts = Storage.getShifts();
+      if(shifts.length > 0) {
+        document.querySelector(`input[name="empShifts"][value="${shifts[0].id}"]`).checked = true;
+      }
+      
+      switchTab(1);
+      toggleSalaryFields();
+      Modal.open('empModal');
+    }
+
+    function editEmployee(id) {
+      const emp = currentEmployees.find(e => e.id === id);
+      if(!emp) return;
+      
+      document.getElementById('empId').value = emp.id;
+      document.getElementById('empModalTitle').textContent = 'Sửa nhân viên';
+      
+      document.getElementById('empName').value = emp.name;
+      document.getElementById('empCode').value = emp.code || '';
+      renderStoreSelectOptions(emp.store_id || emp.storeId || '');
+      document.getElementById('empPhone').value = emp.phone || '';
+      document.getElementById('empPosition').value = emp.position || '';
+      document.getElementById('empStartDate').value = emp.startDate || '';
+      document.getElementById('empActive').value = emp.active !== false ? 'true' : 'false';
+      
+      document.getElementById('empContractType').value = emp.contractType || 'hourly';
+      document.getElementById('empHourlyRate').value = emp.hourlyRate || '';
+      document.getElementById('empShiftRate').value = emp.shiftRate || '';
+      document.getElementById('empFixedSalary').value = emp.fixedSalary || '';
+      
+      const allow = emp.allowances || {};
+      document.getElementById('empAllowFood').value = allow.food || 0;
+      document.getElementById('empAllowTransport').value = allow.transport || 0;
+      document.getElementById('empAllowOther').value = allow.other || 0;
+      
+      document.getElementById('empUsername').value = emp.username || '';
+      document.getElementById('empPassword').value = '';
+      document.getElementById('empPwdHint').style.display = 'block';
+      
+      const cbs = document.querySelectorAll('input[name="empShifts"]');
+      cbs.forEach(cb => {
+        cb.checked = emp.shiftIds && emp.shiftIds.includes(cb.value);
+      });
+      
+      switchTab(1);
+      toggleSalaryFields();
+      Modal.open('empModal');
+    }
+
+    function saveEmployee() {
+      const id = document.getElementById('empId').value;
+      const name = document.getElementById('empName').value.trim();
+      const code = document.getElementById('empCode').value.trim();
+      const storeId = document.getElementById('empStoreId').value;
+
+      if(!name || !code) {
+        Toast.error('Vui lòng nhập tên và mã nhân viên');
+        return;
+      }
+      
+      const cbs = document.querySelectorAll('input[name="empShifts"]:checked');
+      const shiftIds = Array.from(cbs).map(cb => cb.value);
+      
+      const empData = {
+        id: id || undefined,
+        name: name,
+        code: code,
+        store_id: storeId,
+        storeId: storeId,
+        phone: document.getElementById('empPhone').value,
+        position: document.getElementById('empPosition').value,
+        startDate: document.getElementById('empStartDate').value,
+        active: document.getElementById('empActive').value === 'true',
+        contractType: document.getElementById('empContractType').value,
+        hourlyRate: Number(document.getElementById('empHourlyRate').value) || 0,
+        shiftRate: Number(document.getElementById('empShiftRate').value) || 0,
+        fixedSalary: Number(document.getElementById('empFixedSalary').value) || 0,
+        allowances: {
+          food: Number(document.getElementById('empAllowFood').value) || 0,
+          transport: Number(document.getElementById('empAllowTransport').value) || 0,
+          other: Number(document.getElementById('empAllowOther').value) || 0
+        },
+        shiftIds: shiftIds,
+        username: document.getElementById('empUsername').value.trim()
+      };
+      
+      const pwd = document.getElementById('empPassword').value;
+      if (pwd) {
+        empData.password = pwd;
+      } else if (!id && document.getElementById('empUsername').value.trim()) {
+        empData.password = '123456'; // Default password for new if not set
+      }
+
+      Storage.saveEmployee(empData);
+      Toast.success(id ? 'Đã cập nhật thông tin nhân viên' : 'Đã thêm nhân viên mới');
+      Modal.close('empModal');
+      renderEmpTable();
+    }
+
+    async function deleteEmployee(id) {
+      if (await confirm('Bạn có chắc chắn muốn xóa nhân viên này? (Nhân viên sẽ được chuyển sang trạng thái đã nghỉ việc)')) {
+        Storage.deleteEmployee(id);
+        Toast.success('Đã xóa nhân viên');
+        renderEmpTable();
+      }
+    }
+  </script>
+</body>
+</html>

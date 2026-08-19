@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hợp Đồng Lao Động - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .contract-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .contract-tab {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .contract-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .contract-paper {
+      background: #ffffff;
+      color: #1e293b;
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto 32px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.7;
+      position: relative;
+    }
+    .paper-header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 20px;
+    }
+    .paper-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .paper-subtitle {
+      font-size: 14px;
+      color: #475569;
+    }
+    .paper-section {
+      margin-bottom: 24px;
+    }
+    .paper-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      font-size: 13.5px;
+    }
+    .info-item {
+      display: flex;
+      gap: 8px;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #475569;
+      min-width: 110px;
+    }
+    .info-val {
+      color: #0f172a;
+      font-weight: 500;
+    }
+    
+    /* Stamp & Signature area */
+    .signatures-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .sig-box {
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sig-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #0f172a;
+      text-transform: uppercase;
+    }
+    .sig-sub {
+      font-size: 12px;
+      color: #64748b;
+      font-style: italic;
+    }
+    
+    /* Red Seal Stamp */
+    .red-stamp {
+      border: 3px double #dc2626;
+      color: #dc2626;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transform: rotate(-4deg);
+      display: inline-block;
+      margin: 12px 0;
+      box-shadow: 0 0 10px rgba(220,38,38,0.15);
+    }
+    
+    /* Signature Pad */
+    .sig-canvas-container {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      width: 100%;
+    }
+    canvas#sigCanvas {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: crosshair;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">🍗</div>
+          <div>
+            <div class="brand-name">Gà Mẹt Cẩm Phả</div>
+            <div class="brand-sub">Quản lý chấm công & lương</div>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Chính</div>
+        <a href="dashboard.html" class="nav-item admin-only"><i class="fas fa-th-large"></i> Dashboard</a>
+        
+        <div class="nav-label">Nhân sự</div>
+        <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+        <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+        <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+        <a href="contracts.html" class="nav-item active"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+        
+        <div class="nav-label admin-only">Tài chính</div>
+        <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+        
+        <div class="nav-label">Hệ thống</div>
+        <a href="reports.html" class="nav-item admin-only"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+        <a href="settings.html" class="nav-item admin-only"><i class="fas fa-cog"></i> Cài đặt</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-panel">
+          <div class="avatar" id="sidebarAvatar">?</div>
+          <div class="user-meta">
+            <div class="user-name" id="sidebarName">...</div>
+            <div class="user-role" id="sidebarRole">...</div>
+          </div>
+          <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="page-header">
+        <div class="header-left">
+          <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+          <div class="page-title">Hợp Đồng Lao Động</div>
+          <div class="page-subtitle">Ký điện tử Hợp đồng Thử Việc & Hợp đồng Chính Thức</div>
+        </div>
+        <div class="header-actions">
+          <div id="adminEmpSelectWrap" style="display:none; gap:8px;">
+            <select id="adminEmpSelect" class="form-control" style="width: 200px;"></select>
+          </div>
+          <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> In Hợp Đồng</button>
+        </div>
+      </header>
+
+      <div class="page-body">
+        
+        <!-- Contract Type Tabs -->
+        <div class="contract-tabs">
+          <div class="contract-tab active" id="tabProbation" onclick="switchContractTab('probation')">
+            <i class="fas fa-file-alt"></i> 1. Hợp Đồng Thử Việc
+          </div>
+          <div class="contract-tab" id="tabOfficial" onclick="switchContractTab('official')">
+            <i class="fas fa-file-contract"></i> 2. Hợp Đồng Chính Thức
+          </div>
+        </div>
+
+        <!-- Paper Contract Document -->
+        <div class="contract-paper" id="printableContract">
+          <div class="paper-header">
+            <div style="font-weight:700;font-size:13px;letter-spacing:1px;color:#475569">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div style="font-size:12px;font-weight:600;color:#64748b">Độc lập - Tự do - Hạnh phúc</div>
+            <div style="margin:12px 0 6px;color:#cbd5e1">---***---</div>
+            <h1 class="paper-title" id="contractPaperTitle">HỢP ĐỒNG THỬ VIỆC LAO ĐỘNG</h1>
+            <div class="paper-subtitle" id="contractNum">Số: HDTV-2024/001</div>
+          </div>
+
+          <!-- Section A: Parties -->
+          <div class="paper-section">
+            <div class="paper-section-title">I. CÁC BÊN THAM GIA HỢP ĐỒNG</div>
+            
+            <div style="margin-bottom:12px">
+              <strong style="color:#0f172a">BÊN A (NSDLĐ): NHÀ HÀNG GÀ MẸT CẨM PHẢ</strong>
+              <div class="info-grid" style="margin-top:6px">
+                <div class="info-item"><span class="info-label">Đại diện:</span><span class="info-val">Quản Lý Nhà Hàng</span></div>
+                <div class="info-item"><span class="info-label">Địa chỉ:</span><span class="info-val">TP. Cẩm Phả, Quảng Ninh</span></div>
+                <div class="info-item"><span class="info-label">Điện thoại:</span><span class="info-val">0901 234 567</span></div>
+              </div>
+            </div>
+
+            <div style="margin-top:16px">
+              <strong style="color:#0f172a">BÊN B (NLĐ): NHÂN VIÊN LAO ĐỘNG</strong>
+              <div class="info-grid" style="margin-top:6px">
+                <div class="info-item"><span class="info-label">Họ và tên:</span><span class="info-val" id="docEmpName">--</span></div>
+                <div class="info-item"><span class="info-label">Mã nhân viên:</span><span class="info-val" id="docEmpCode">--</span></div>
+                <div class="info-item"><span class="info-label">Vị trí công việc:</span><span class="info-val" id="docEmpPosition">--</span></div>
+                <div class="info-item"><span class="info-label">Số điện thoại:</span><span class="info-val" id="docEmpPhone">--</span></div>
+                <div class="info-item"><span class="info-label">Ngày bắt đầu:</span><span class="info-val" id="docEmpStartDate">--</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section B: Terms & Conditions -->
+          <div class="paper-section">
+            <div class="paper-section-title">II. NỘI DUNG & ĐIỀU KHOẢN HỢP ĐỒNG</div>
+            
+            <div class="info-grid">
+              <div class="info-item" style="grid-column:span 2">
+                <span class="info-label">Thời hạn HĐ:</span>
+                <span class="info-val" id="docDuration">02 tháng</span>
+              </div>
+              <div class="info-item" style="grid-column:span 2">
+                <span class="info-label">Mức lương:</span>
+                <span class="info-val" id="docSalary">25.000đ / giờ</span>
+              </div>
+              <div class="info-item" style="grid-column:span 2">
+                <span class="info-label">Phụ cấp:</span>
+                <span class="info-val" id="docAllowance">Phụ cấp ăn 300.000đ/tháng, Xăng xe 200.000đ/tháng</span>
+              </div>
+              <div class="info-item" style="grid-column:span 2">
+                <span class="info-label">Thời giờ làm việc:</span>
+                <span class="info-val" id="docSchedule">Theo ca phân công của Nhà hàng</span>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;font-size:13px;color:#334155">
+              <strong>Quyền lợi & Trách nhiệm:</strong>
+              <ul style="padding-left:20px;margin-top:6px">
+                <li>Được hưởng đầy đủ lương, thưởng lễ và phụ cấp theo quy chế của Nhà hàng.</li>
+                <li>Được hưởng chế độ miễn 05 lần đi muộn/tháng theo chính sách chấm công.</li>
+                <li>Thực hiện đúng quy trình phục vụ, đảm bảo vệ sinh an toàn thực phẩm.</li>
+                <li>Chấm công đầy đủ khi bắt đầu và kết thúc ca làm việc qua hệ thống.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Section C: Signatures -->
+          <div class="signatures-container">
+            <!-- Party A Signature -->
+            <div class="sig-box">
+              <div>
+                <div class="sig-title">ĐẠI DIỆN BÊN A</div>
+                <div class="sig-sub">(Ký, đóng dấu)</div>
+              </div>
+              <div style="margin:16px 0">
+                <div class="red-stamp"><i class="fas fa-check-double"></i> ĐÃ PHÊ DUYỆT<br><span style="font-size:10px;font-weight:600">GÀ MẸT CẨM PHẢ</span></div>
+              </div>
+              <strong style="color:#0f172a">Quản Lý Nhà Hàng</strong>
+            </div>
+
+            <!-- Party B Signature -->
+            <div class="sig-box" id="sigBoxB">
+              <div>
+                <div class="sig-title">NGƯỜI LAO ĐỘNG (BÊN B)</div>
+                <div class="sig-sub">(Ký và ghi rõ họ tên)</div>
+              </div>
+              
+              <div id="sigAreaEmployee" style="width:100%">
+                <!-- Filled dynamically by JS (Canvas signature or Red stamp if signed) -->
+              </div>
+
+              <strong style="color:#0f172a" id="docEmpSignName">--</strong>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script>
+    seedData();
+    const session = requireAuth();
+    let currentContractType = 'probation';
+    let targetEmpId = session ? session.employeeId : null;
+    let canvas, ctx, isDrawing = false;
+
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          renderContract();
+        });
+      }
+
+      if (session.role !== 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+      } else {
+        const pending = Storage.getPendingAdvances().length;
+        if (pending > 0) {
+          const navAdv = document.getElementById('navAdvances');
+          if (navAdv) navAdv.innerHTML += `<span class="nav-badge">${pending}</span>`;
+        }
+        
+        // Admin dropdown selector
+        const wrap = document.getElementById('adminEmpSelectWrap');
+        wrap.style.display = 'flex';
+        const sel = document.getElementById('adminEmpSelect');
+        const emps = Storage.getEmployees(true).filter(e => e.role === 'employee');
+        emps.forEach(e => {
+          sel.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+        });
+        sel.value = targetEmpId;
+        sel.addEventListener('change', (e) => {
+          targetEmpId = e.target.value;
+          renderContract();
+        });
+      }
+
+      initSidebar();
+      renderContract();
+    }
+
+    function switchContractTab(type) {
+      currentContractType = type;
+      document.getElementById('tabProbation').classList.toggle('active', type === 'probation');
+      document.getElementById('tabOfficial').classList.toggle('active', type === 'official');
+      renderContract();
+    }
+
+    function renderContract() {
+      const emp = Storage.getEmployee(targetEmpId);
+      if (!emp) return;
+
+      // Populate Party B Info
+      document.getElementById('docEmpName').textContent = emp.name;
+      document.getElementById('docEmpCode').textContent = emp.code || '---';
+      document.getElementById('docEmpPosition').textContent = emp.position || 'Nhân viên';
+      document.getElementById('docEmpPhone').textContent = emp.phone || '---';
+      document.getElementById('docEmpStartDate').textContent = Utils.formatDate(emp.startDate || Utils.today());
+      document.getElementById('docEmpSignName').textContent = emp.name;
+
+      // Contract title & defaults
+      const isProbation = currentContractType === 'probation';
+      document.getElementById('contractPaperTitle').textContent = isProbation
+        ? 'HỢP ĐỒNG THỬ VIỆC LAO ĐỘNG'
+        : 'HỢP ĐỒNG LAO ĐỘNG CHÍNH THỨC';
+      document.getElementById('contractNum').textContent = `Số: ${isProbation ? 'HDTV' : 'HDLD'}-${new Date().getFullYear()}/${emp.code || '001'}`;
+
+      // Get stored contract
+      let contract = Storage.getContract(targetEmpId, currentContractType);
+
+      // Contract terms display
+      document.getElementById('docDuration').textContent = contract ? contract.duration : (isProbation ? '02 tháng (kể từ ngày bắt đầu)' : '12 tháng (kể từ ngày ký)');
+      
+      let salText = emp.contractType === 'hourly'
+        ? `${Utils.currency(emp.hourlyRate)} / giờ`
+        : (emp.contractType === 'shift' ? `${Utils.currency(emp.shiftRate)} / ca` : `${Utils.currency(emp.fixedSalary)} / tháng`);
+      document.getElementById('docSalary').textContent = contract ? contract.salaryText : salText;
+
+      const allow = emp.allowances || {};
+      const allowParts = [];
+      if (allow.food) allowParts.push(`Ăn uống: ${Utils.currency(allow.food)}/tháng`);
+      if (allow.transport) allowParts.push(`Xăng xe: ${Utils.currency(allow.transport)}/tháng`);
+      if (allow.other) allowParts.push(`Khác: ${Utils.currency(allow.other)}/tháng`);
+      const allowStr = allowParts.length > 0 ? allowParts.join(', ') : 'Theo chính sách quán';
+      document.getElementById('docAllowance').textContent = contract ? contract.allowanceText : allowStr;
+
+      // Render Party B Signature Box
+      const sigArea = document.getElementById('sigAreaEmployee');
+
+      if (contract && contract.status === 'signed') {
+        // Already signed
+        const dateStr = contract.signedAt ? Utils.formatDate(contract.signedAt.split('T')[0]) : 'Đã ký';
+        sigArea.innerHTML = `
+          <div class="red-stamp" style="margin:16px 0">
+            <i class="fas fa-file-signature"></i> ĐÃ KÝ ĐIỆN TỬ<br>
+            <span style="font-size:10px;font-weight:600">${dateStr}</span>
+          </div>
+          ${contract.signatureData && contract.signatureData.startsWith('data:image') 
+            ? `<div style="margin:8px 0"><img src="${contract.signatureData}" style="max-height:60px;max-width:180px"></div>` 
+            : `<div style="font-family:'Courier New',monospace;font-weight:bold;color:#0f172a;margin:8px 0">${contract.signatureData || emp.name}</div>`}
+        `;
+      } else {
+        // Pending signature
+        if (session.employeeId === targetEmpId) {
+          // Employee signing view
+          sigArea.innerHTML = `
+            <div class="sig-canvas-container">
+              <div style="font-size:12px;color:#64748b;margin-bottom:6px">Vẽ chữ ký của bạn vào khung bên dưới:</div>
+              <canvas id="sigCanvas" width="280" height="120"></canvas>
+              <div style="display:flex;gap:8px;margin-top:8px;justify-content:center">
+                <button class="btn btn-sm btn-secondary" onclick="clearCanvas()"><i class="fas fa-eraser"></i> Xóa ký lại</button>
+                <button class="btn btn-sm btn-success" onclick="submitSignature()"><i class="fas fa-pen-nib"></i> Xác nhận ký HĐ</button>
+              </div>
+            </div>
+          `;
+          setTimeout(initCanvas, 100);
+        } else {
+          // Admin viewing unsigned contract
+          sigArea.innerHTML = `
+            <div style="padding:20px 0;color:#94a3b8;font-style:italic;font-size:13px">
+              <i class="fas fa-clock"></i> Chưa ký điện tử
+            </div>
+          `;
+        }
+      }
+    }
+
+    function initCanvas() {
+      canvas = document.getElementById('sigCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#0f172a';
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function startDraw(e) {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      }
+      function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      }
+      function stopDraw() { isDrawing = false; }
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDraw);
+      canvas.addEventListener('mouseleave', stopDraw);
+
+      canvas.addEventListener('touchstart', startDraw);
+      canvas.addEventListener('touchmove', draw);
+      canvas.addEventListener('touchend', stopDraw);
+    }
+
+    function clearCanvas() {
+      if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function submitSignature() {
+      const emp = Storage.getEmployee(targetEmpId);
+      if (!emp) return;
+
+      let sigImg = null;
+      if (canvas) {
+        sigImg = canvas.toDataURL();
+      }
+
+      const contract = {
+        id: Utils.uuid(),
+        employeeId: targetEmpId,
+        type: currentContractType,
+        contractNumber: document.getElementById('contractNum').textContent.replace('Số: ', ''),
+        title: document.getElementById('contractPaperTitle').textContent,
+        duration: document.getElementById('docDuration').textContent,
+        salaryText: document.getElementById('docSalary').textContent,
+        allowanceText: document.getElementById('docAllowance').textContent,
+        workSchedule: document.getElementById('docSchedule').textContent,
+        status: 'signed',
+        signedAt: new Date().toISOString(),
+        signatureData: sigImg || emp.name,
+      };
+
+      Storage.saveContract(contract);
+      Toast.success(`Ký hợp đồng ${currentContractType === 'probation' ? 'thử việc' : 'chính thức'} thành công ✓`);
+      renderContract();
+    }
+  </script>
+</body>
+</html>

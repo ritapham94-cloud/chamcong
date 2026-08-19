@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    @media (max-width: 1024px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .progress-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .progress-item {
+      margin-bottom: 15px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    .progress-bar-bg {
+      height: 8px;
+      background: var(--bg-input, #2a2a2a);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent-color, #f97316);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="app-layout">
+  
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🍗</div>
+        <div>
+          <div class="brand-name">Gà Mẹt Cẩm Phả</div>
+          <div class="brand-sub">Quản lý nhân sự</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Tổng quan</div>
+      <a href="dashboard.html" class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-label">Nhân sự</div>
+      <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+      <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+      <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+      <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+      <div class="nav-label">Tài chính</div>
+      <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+      <div class="nav-label">Hệ thống</div>
+      <a href="reports.html" class="nav-item"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+      <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i> Cài đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-panel">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="sidebarName">...</div>
+          <div class="user-role" id="sidebarRole">...</div>
+        </div>
+        <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle" id="dashboardSubtitle">Hôm nay: ...</div>
+      </div>
+      <div class="header-actions">
+        <a href="attendance.html" class="btn btn-success"><i class="fas fa-plus"></i> Chấm công</a>
+        <a href="payroll.html" class="btn btn-primary"><i class="fas fa-file-invoice-dollar"></i> Bảng lương</a>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="alert-banner info" style="margin-bottom: 20px;">
+        <i class="fas fa-info-circle"></i> Chính sách muộn: Miễn 5 lần/tháng, phạt 50.000đ/lần từ lần thứ 6 (đi muộn ≥15 phút)
+      </div>
+
+      <div class="stats-grid" id="statsContainer">
+        <div class="stat-card accent">
+          <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+          <div>
+            <div class="stat-val" id="statTotalEmployees">0</div>
+            <div class="stat-label">Tổng nhân viên</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <div class="stat-val" id="statWorking">0</div>
+            <div class="stat-label">Đang làm hôm nay</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div>
+            <div class="stat-val" id="statLate">0</div>
+            <div class="stat-label">Đi muộn hôm nay</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+          <div>
+            <div class="stat-val" id="statAbsent">0</div>
+            <div class="stat-label">Vắng mặt</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-layout">
+        <!-- Chấm công hôm nay -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Chấm công hôm nay</h2>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nhân viên</th>
+                  <th>Ca</th>
+                  <th>Giờ vào</th>
+                  <th>Giờ ra</th>
+                  <th>Giờ làm</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="todayAttendanceTable">
+                <!-- Rows will be injected by JS -->
+              </tbody>
+            </table>
+          </div>
+      <!-- Khu Vực Cần Duyệt (Realtime Pending Approvals Hub) -->
+      <div class="card" id="pendingApprovalsCard" style="margin-bottom: 24px; border: 1px solid var(--accent); background: linear-gradient(135deg, rgba(249,115,22,0.06), rgba(13,20,37,0.8));">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 class="card-title" style="color:var(--accent); font-size:16px;">
+            <i class="fas fa-bolt" style="color:var(--accent);"></i> KHU VỰC CẦN DUYỆT (REALTIME APPROVAL HUB)
+          </h2>
+          <span class="badge badge-warning" id="pendingTotalBadge">0 Yêu cầu chờ xử lý</span>
+        </div>
+        <div style="padding: 16px;">
+          <div id="pendingContainer">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Main 2-column layout -->
+      <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        
+        <!-- Chấm công hôm nay -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Chấm công hôm nay</h2>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nhân viên</th>
+                  <th>Ca</th>
+                  <th>Giờ vào</th>
+                  <th>Giờ ra</th>
+                  <th>Giờ làm</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="todayAttendanceTable">
+                <!-- Rows will be injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Thống kê tháng -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Thống kê tháng này</h2>
+          </div>
+          <div style="padding: 20px;">
+            <ul class="progress-list" id="monthStatsList">
+              <!-- Items will be injected by JS -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  
+  <script>
+    // Init
+    if (typeof seedData === 'function') seedData();
+    
+    // Auth check for Admin
+    let session = null;
+    if (typeof requireAdmin === 'function') {
+      session = requireAdmin();
+    } else if (typeof Auth !== 'undefined') {
+      session = Auth.getSession();
+      if (!session || session.role !== 'admin') {
+        window.location.href = 'index.html';
+      }
+    }
+
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      const storeCount = (typeof Storage !== 'undefined' && typeof Storage.getStores === 'function') ? Storage.getStores(true).length : 4;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? `Quản Lý Tổng (${storeCount} Quán)` : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      if (typeof Utils !== 'undefined' && typeof Utils.initials === 'function') {
+        document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+      }
+
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      
+      if (typeof initSidebar === 'function') initSidebar();
+      initPage();
+    }
+
+    function renderPendingApprovalsHub() {
+      const container = document.getElementById('pendingContainer');
+      const totalBadge = document.getElementById('pendingTotalBadge');
+      if (!container) return;
+
+      const storeId = Storage.currentStoreId;
+      const allContracts = DB.getContracts(storeId).filter(c => c.status === 'pending');
+
+      const totalPending = allContracts.length;
+      totalBadge.textContent = `${totalPending} Hợp đồng chờ ký`;
+      totalBadge.className = totalPending > 0 ? 'badge badge-warning' : 'badge badge-success';
+
+      if (totalPending === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:16px 0; color:var(--text-muted); font-size:13.5px;">
+            <i class="fas fa-check-circle" style="color:var(--success); font-size:20px; margin-bottom:6px;"></i><br>
+            Tuyệt vời! Hiện tại tất cả hợp đồng đã được hoàn tất.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      if (pendingAdvances.length > 0) {
+        html += `<div style="font-size:13px; font-weight:700; color:var(--warning); margin-bottom:8px;"><i class="fas fa-hand-holding-usd"></i> Đơn Tạm Ứng Lương Chờ Duyệt (${pendingAdvances.length})</div>`;
+        html += `<div class="table-wrapper"><table class="table" style="font-size:13px;">
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th>Số tiền</th>
+              <th>Lý do</th>
+              <th>Ngày yêu cầu</th>
+              <th style="text-align:right">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        
+        pendingAdvances.forEach(adv => {
+          const emp = DB.getEmployee(adv.employeeId);
+          const empName = emp ? emp.name : 'Nhân viên';
+          html += `
+            <tr>
+              <td><strong>${empName}</strong></td>
+              <td style="color:var(--warning);font-weight:700;">${Utils.currency(adv.amount)}</td>
+              <td>${adv.reason || 'Chi tiêu'}</td>
+              <td>${Utils.formatDate(adv.date)}</td>
+              <td style="text-align:right">
+                <button class="btn btn-sm btn-success" onclick="quickApproveAdvance('${adv.id}')"><i class="fas fa-check"></i> Duyệt</button>
+                <button class="btn btn-sm btn-danger" onclick="quickRejectAdvance('${adv.id}')"><i class="fas fa-times"></i> Từ chối</button>
+              </td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      if (allContracts.length > 0) {
+        html += `<div style="font-size:13px; font-weight:700; color:var(--info); margin-top:14px; margin-bottom:8px;"><i class="fas fa-file-signature"></i> Hợp Đồng Lao Động Chưa Ký (${allContracts.length})</div>`;
+        html += `<div class="table-wrapper"><table class="table" style="font-size:13px;">
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th>Loại HĐ</th>
+              <th>Số hợp đồng</th>
+              <th style="text-align:right">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        
+        allContracts.forEach(c => {
+          const emp = DB.getEmployee(c.employeeId);
+          const empName = emp ? emp.name : 'Nhân viên';
+          html += `
+            <tr>
+              <td><strong>${empName}</strong></td>
+              <td>${c.type === 'probation' ? 'Thử việc' : 'Chính thức'}</td>
+              <td>${c.contractNumber || '---'}</td>
+              <td style="text-align:right"><span class="badge badge-warning">Chờ nhân viên ký</span></td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function quickApproveAdvance(id) {
+      const advs = DB.getAdvances();
+      const adv = advs.find(a => a.id === id);
+      if (adv) {
+        adv.status = 'approved';
+        adv.approvedBy = session.name;
+        adv.approvedAt = new Date().toISOString();
+        DB.saveAdvance(adv);
+        Toast.success('Đã duyệt đơn tạm ứng thành công ✓');
+        initPage();
+      }
+    }
+
+    function quickRejectAdvance(id) {
+      const advs = DB.getAdvances();
+      const adv = advs.find(a => a.id === id);
+      if (adv) {
+        adv.status = 'rejected';
+        adv.approvedBy = session.name;
+        adv.approvedAt = new Date().toISOString();
+        DB.saveAdvance(adv);
+        Toast.info('Đã từ chối đơn tạm ứng');
+        initPage();
+      }
+    }
+
+    function getStatusBadge(record) {
+      if (!record) return '<span class="badge badge-neutral">Vắng</span>';
+      
+      let badgeHtml = '';
+      
+      if (record.checkOut) {
+        badgeHtml = '<span class="badge badge-info">Đã về</span>';
+      } else {
+        badgeHtml = '<span class="badge badge-success">Đang làm</span>';
+      }
+
+      if (record.isLateViolation || record.lateMinutes > 0) {
+        badgeHtml += ' <span class="badge badge-warning">Đi muộn</span>';
+      }
+      
+      return badgeHtml;
+    }
+
+    function initPage() {
+      renderPendingApprovalsHub();
+      // Set subtitle to today's date
+      if (typeof Utils !== 'undefined' && typeof Utils.formatDate === 'function') {
+        document.getElementById('dashboardSubtitle').textContent = `Hôm nay: ${Utils.formatDate(Utils.today())}`;
+      }
+
+      // 1. Stats
+      const todaySummary = typeof Attendance !== 'undefined' ? Attendance.getTodaySummary() : { working: 0, late: 0, absent: 0 };
+      const employees = typeof Storage !== 'undefined' ? Storage.getEmployees(true) : [];
+      
+      document.getElementById('statTotalEmployees').textContent = employees.length;
+      document.getElementById('statWorking').textContent = todaySummary.working || 0;
+      document.getElementById('statLate').textContent = todaySummary.late || 0;
+      document.getElementById('statAbsent').textContent = todaySummary.absent || 0;
+
+      // 2. Chấm công hôm nay
+      const tbody = document.getElementById('todayAttendanceTable');
+      tbody.innerHTML = '';
+      
+      employees.forEach(emp => {
+        const record = typeof Storage !== 'undefined' ? Storage.getTodayRecord(emp.id) : null;
+        let shiftName = '-';
+        let checkIn = '-';
+        let checkOut = '-';
+        let workHours = '-';
+        
+        if (record) {
+          const shift = typeof Storage !== 'undefined' ? Storage.getShift(record.shiftId) : null;
+          shiftName = shift ? shift.name : '-';
+          checkIn = record.checkIn || '-';
+          checkOut = record.checkOut || '-';
+          workHours = record.workHours ? record.workHours.toFixed(1) + 'h' : '-';
+        }
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${emp.name}</strong></td>
+          <td>${shiftName}</td>
+          <td>${checkIn}</td>
+          <td>${checkOut}</td>
+          <td>${workHours}</td>
+          <td>${getStatusBadge(record)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 3. Thống kê tháng này
+      const currentMonth = typeof Utils !== 'undefined' ? Utils.currentMonth() : '';
+      const monthStatsList = document.getElementById('monthStatsList');
+      monthStatsList.innerHTML = '';
+      
+      employees.forEach(emp => {
+        let workDays = 0;
+        let totalShifts = 0;
+        
+        if (typeof Attendance !== 'undefined') {
+          const monthlySummary = Attendance.getMonthlySummary(emp.id, currentMonth);
+          if (monthlySummary) {
+            workDays = monthlySummary.workDays || 0;
+            totalShifts = monthlySummary.totalShifts || 0;
+          }
+        }
+        
+        const maxDays = 31; // Simplistic max days for percentage
+        const percent = Math.min(100, Math.round((workDays / maxDays) * 100));
+        
+        const li = document.createElement('li');
+        li.className = 'progress-item';
+        li.innerHTML = `
+          <div class="progress-header">
+            <span>${emp.name}</span>
+            <span>${workDays} ngày / ${totalShifts} ca</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${percent}%"></div>
+          </div>
+        `;
+        monthStatsList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>

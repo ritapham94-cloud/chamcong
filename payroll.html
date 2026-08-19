@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tính lương - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">🍗</div>
+          <div><div class="brand-name">Gà Mẹt Cẩm Phả</div><div class="brand-sub">Quản lý nhân sự</div></div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Tổng quan</div>
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+        <div class="nav-label">Nhân sự</div>
+        <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+        <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+        <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+        <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+        
+        <div class="nav-label">Tài chính</div>
+        <a href="payroll.html" class="nav-item active admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+        <div class="nav-label">Hệ thống</div>
+        <a href="reports.html" class="nav-item"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+        <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i> Cài đặt</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-panel">
+          <div class="avatar" id="sidebarAvatar">?</div>
+          <div class="user-meta"><div class="user-name" id="sidebarName">...</div><div class="user-role" id="sidebarRole">...</div></div>
+          <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="page-header">
+        <div class="header-left">
+          <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+          <div class="page-title">Bảng lương</div>
+          <div class="page-subtitle">Tính toán và quản lý lương nhân viên</div>
+        </div>
+        <div class="header-actions">
+          <div class="form-group" style="margin-bottom: 0;">
+            <input type="month" class="form-control" id="monthSelector">
+          </div>
+          <button class="btn btn-primary" onclick="calculateCurrentMonth()">
+            <i class="fas fa-calculator"></i> Tính lương tháng này
+          </button>
+          <button class="btn btn-success" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+          </button>
+        </div>
+      </header>
+
+      <div class="page-body">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Chi tiết bảng lương <span id="monthDisplay"></span></h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="table" id="payrollTable">
+              <thead>
+                <tr>
+                  <th>Nhân viên</th>
+                  <th>Loại HĐ</th>
+                  <th>Ngày công</th>
+                  <th>Giờ/Ca</th>
+                  <th>Lương CB</th>
+                  <th>Phụ cấp</th>
+                  <th>Thưởng</th>
+                  <th>Muộn/Phạt</th>
+                  <th>Thực lãnh</th>
+                  <th>Trạng thái</th>
+                  <th>Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows -->
+              </tbody>
+              <tfoot>
+                <!-- Summary Row -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="payrollModal">
+    <div class="modal" style="width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Chi tiết lương - <span id="modalEmpName"></span> (<span id="modalMonth"></span>)</h3>
+        <button class="modal-close" onclick="Modal.close('payrollModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="payroll-breakdown">
+          <div class="payroll-row">
+            <div class="label">Lương cơ bản <small id="workNote" style="display:block;color:var(--text-muted);"></small></div>
+            <div class="value" id="modalBasicSalary">0đ</div>
+          </div>
+          <div class="payroll-row" id="rowHolidayBonus">
+            <div class="label">Thưởng ngày lễ</div>
+            <div class="value" id="modalHolidayBonus">0đ</div>
+          </div>
+          <div class="payroll-row">
+            <div class="label">Phụ cấp ăn, xăng, khác</div>
+            <div class="value" id="modalAllowances">0đ</div>
+          </div>
+          <div class="payroll-row">
+            <div class="label">Thưởng thêm</div>
+            <div class="value">
+              <input type="number" class="form-control" id="modalBonusAmount" value="0" style="width: 120px; display: inline-block;">
+              <input type="text" class="form-control" id="modalBonusNote" placeholder="Ghi chú thưởng" style="width: 200px; display: inline-block; margin-left: 5px;">
+            </div>
+          </div>
+          <div class="payroll-row" style="font-weight: bold; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <div class="label">Tổng thu</div>
+            <div class="value" id="modalTotalIncome">0đ</div>
+          </div>
+          
+          <div class="payroll-row" style="margin-top: 15px;">
+            <div class="label">Đi muộn/về sớm <small id="lateNote" style="display:block;color:var(--text-muted);"></small></div>
+            <div class="value" id="modalLatePenalty" style="color: var(--danger-color);">-0đ</div>
+          </div>
+          <div class="payroll-row">
+            <div class="label">Khấu trừ khác</div>
+            <div class="value">
+              <input type="number" class="form-control" id="modalOtherDeductions" value="0" style="width: 120px; display: inline-block;">
+              <input type="text" class="form-control" id="modalOtherDeductionsNote" placeholder="Ghi chú khấu trừ" style="width: 200px; display: inline-block; margin-left: 5px;">
+            </div>
+          </div>
+          
+          <div class="payroll-row" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color); border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: 15px;">
+            <div class="label">Thực lãnh</div>
+            <div class="value" id="modalNetPay">0đ</div>
+          </div>
+        </div>
+        <input type="hidden" id="modalEmpId">
+        <input type="hidden" id="modalCurrentMonth">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="exportPayslipPDF()"><i class="fas fa-file-pdf"></i> Xuất phiếu lương PDF</button>
+        <button class="btn btn-success" id="btnMarkPaid" onclick="markPaid()"><i class="fas fa-check"></i> Đánh dấu đã trả</button>
+        <button class="btn btn-primary" onclick="saveManualAdjustments()"><i class="fas fa-save"></i> Lưu điều chỉnh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  <script>
+    seedData();
+    const session = requireAdmin();
+    let currentMonthStr = Utils.currentMonth();
+    
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+      
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      initSidebar();
+      initPage();
+    }
+
+    function initPage() {
+      const monthSel = document.getElementById('monthSelector');
+      monthSel.value = currentMonthStr;
+      monthSel.addEventListener('change', (e) => {
+        currentMonthStr = e.target.value;
+        renderPayrollTable();
+      });
+      renderPayrollTable();
+    }
+
+    function calculateCurrentMonth() {
+      const employees = Storage.getEmployees(true);
+      employees.forEach(emp => {
+        Payroll.calculate(emp.id, currentMonthStr);
+      });
+      renderPayrollTable();
+      Toast.success('Đã tính lương cho tháng ' + currentMonthStr);
+    }
+
+    function renderPayrollTable() {
+      document.getElementById('monthDisplay').textContent = currentMonthStr;
+      const tbody = document.querySelector('#payrollTable tbody');
+      const tfoot = document.querySelector('#payrollTable tfoot');
+      tbody.innerHTML = '';
+      
+      const employees = Storage.getEmployees(true);
+      let totalBasic = 0, totalAllowance = 0, totalBonus = 0, totalPenalty = 0, totalAdvance = 0, totalNet = 0;
+      
+      employees.forEach(emp => {
+        let p = Storage.getPayroll(emp.id, currentMonthStr);
+        if (!p) {
+          p = Payroll.calculate(emp.id, currentMonthStr);
+        }
+        if (!p) return;
+
+        const workDaysStr = `${p.workDays || 0} ngày`;
+        const workHoursStr = `${(p.totalWorkHours || 0).toFixed(1)}h`;
+        const baseSalaryVal = p.baseSalary || 0;
+        const allowanceVal = p.totalAllowances || 0;
+        const bonusVal = (p.holidayBonus || 0) + (p.bonus || 0);
+        const penaltyVal = (p.lateDeduction || 0) + (p.otherDeductions || 0);
+        const netSalaryVal = p.netSalary || 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${emp.name}</td>
+          <td>${Utils.contractLabel(emp.contractType)}</td>
+          <td>${workDaysStr}</td>
+          <td>${workHoursStr}</td>
+          <td>${Utils.currency(baseSalaryVal)}</td>
+          <td>${Utils.currency(allowanceVal)}</td>
+          <td>${Utils.currency(bonusVal)}</td>
+          <td style="color: var(--danger-color)">-${Utils.currency(penaltyVal)}</td>
+          <td style="font-weight: bold; color: var(--accent-color)">${Utils.currency(netSalaryVal)}</td>
+          <td><span class="badge badge-${Payroll.statusBadgeClass(p.status)}">${Payroll.statusLabel(p.status)}</span></td>
+          <td>
+            <button class="btn btn-sm btn-ghost" onclick="openDetailModal('${emp.id}', '${currentMonthStr}')">Chi tiết</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        totalBasic += baseSalaryVal;
+        totalAllowance += allowanceVal;
+        totalBonus += bonusVal;
+        totalPenalty += penaltyVal;
+        totalNet += netSalaryVal;
+      });
+
+      if (employees.length > 0) {
+        tfoot.innerHTML = `
+          <tr style="font-weight:bold; background:var(--bg-lighter)">
+            <td colspan="4" style="text-align:right">Tổng cộng:</td>
+            <td>${Utils.currency(totalBasic)}</td>
+            <td>${Utils.currency(totalAllowance)}</td>
+            <td>${Utils.currency(totalBonus)}</td>
+            <td style="color: var(--danger-color)">-${Utils.currency(totalPenalty)}</td>
+            <td style="color: var(--accent-color)">${Utils.currency(totalNet)}</td>
+            <td colspan="2"></td>
+          </tr>
+        `;
+      } else {
+        tfoot.innerHTML = '';
+      }
+    }
+
+    function openDetailModal(empId, month) {
+      const emp = Storage.getEmployee(empId);
+      let p = Storage.getPayroll(empId, month);
+      if (!p) {
+        p = Payroll.calculate(empId, month);
+      }
+      if (!emp || !p) return;
+
+      const policy = Storage.getSettings().latePolicy || { freePassesPerMonth: 5, deductionPerOccurrence: 50000 };
+
+      document.getElementById('modalEmpName').textContent = emp.name;
+      document.getElementById('modalMonth').textContent = month;
+      document.getElementById('modalEmpId').value = empId;
+      document.getElementById('modalCurrentMonth').value = month;
+
+      document.getElementById('workNote').textContent = `(${p.workNote || `Công: ${p.workDays} ngày, ${(p.totalWorkHours || 0).toFixed(1)} giờ`})`;
+      document.getElementById('modalBasicSalary').textContent = Utils.currency(p.baseSalary || 0);
+      
+      const rb = document.getElementById('rowHolidayBonus');
+      if (p.holidayBonus > 0) {
+        rb.style.display = 'flex';
+        document.getElementById('modalHolidayBonus').textContent = Utils.currency(p.holidayBonus);
+      } else {
+        rb.style.display = 'none';
+      }
+
+      document.getElementById('modalAllowances').textContent = Utils.currency(p.totalAllowances || 0);
+      document.getElementById('modalBonusAmount').value = p.bonus || 0;
+      document.getElementById('modalBonusNote').value = p.bonusNote || '';
+
+      const totalIncome = (p.baseSalary || 0) + (p.holidayBonus || 0) + (p.totalAllowances || 0) + (p.bonus || 0);
+      document.getElementById('modalTotalIncome').textContent = Utils.currency(totalIncome);
+
+      document.getElementById('lateNote').textContent = `(Tháng này: ${p.lateCount || 0} lần muộn/sớm. Miễn ${policy.freePassesPerMonth} lần. Bị phạt ${p.lateViolationCount || 0} lần × ${Utils.currency(policy.deductionPerOccurrence)} = ${Utils.currency(p.lateDeduction || 0)})`;
+      document.getElementById('modalLatePenalty').textContent = '-' + Utils.currency(p.lateDeduction || 0);
+      
+      document.getElementById('modalOtherDeductions').value = p.otherDeductions || 0;
+      document.getElementById('modalOtherDeductionsNote').value = p.otherDeductionsNote || '';
+      
+      document.getElementById('modalAdvances').textContent = '-' + Utils.currency(p.totalAdvances || 0);
+      
+      document.getElementById('modalNetPay').textContent = Utils.currency(p.netSalary || 0);
+
+      const btnMarkPaid = document.getElementById('btnMarkPaid');
+      if (p.status === 'paid') {
+        btnMarkPaid.style.display = 'none';
+      } else {
+        btnMarkPaid.style.display = 'inline-block';
+      }
+
+      Modal.open('payrollModal');
+    }
+
+    function saveManualAdjustments() {
+      const empId = document.getElementById('modalEmpId').value;
+      const month = document.getElementById('modalCurrentMonth').value;
+      const bonus = parseFloat(document.getElementById('modalBonusAmount').value) || 0;
+      const bonusNote = document.getElementById('modalBonusNote').value;
+      const otherDeductions = parseFloat(document.getElementById('modalOtherDeductions').value) || 0;
+      const otherDeductionsNote = document.getElementById('modalOtherDeductionsNote').value;
+
+      Payroll.updateManualFields(empId, month, {
+        bonus, bonusNote, otherDeductions, otherDeductionsNote
+      });
+
+      Toast.success('Đã cập nhật bảng lương');
+      renderPayrollTable();
+      openDetailModal(empId, month); // refresh modal values
+    }
+
+    function markPaid() {
+      const empId = document.getElementById('modalEmpId').value;
+      const month = document.getElementById('modalCurrentMonth').value;
+      Payroll.markPaid(empId, month);
+      Toast.success('Đã đánh dấu thanh toán');
+      renderPayrollTable();
+      Modal.close('payrollModal');
+    }
+
+    function exportToExcel() {
+      if (typeof Export !== 'undefined' && Export.payrollExcel) {
+        Export.payrollExcel(currentMonthStr);
+      } else {
+        Toast.info('Tính năng đang được cập nhật');
+      }
+    }
+
+    function exportPayslipPDF() {
+      const empId = document.getElementById('modalEmpId').value;
+      const month = document.getElementById('modalCurrentMonth').value;
+      if (typeof Export !== 'undefined' && Export.payslipPDF) {
+        Export.payslipPDF(empId, month);
+      } else {
+        Toast.info('Tính năng đang được cập nhật');
+      }
+    }
+  </script>
+</body>
+</html>

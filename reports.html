@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo & Xuất file - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .export-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .export-card .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-box {
+      background: var(--bg-color);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin: 1rem 0;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .preview-box h4 {
+      margin-top: 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .export-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .export-actions .btn {
+      flex: 1;
+    }
+    .calendar-preview {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    .cal-day {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 2px;
+      background: var(--bg-color-alt);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+    .cal-day.present { background: var(--success); color: white; }
+    .cal-day.late { background: var(--warning); color: #000; }
+    .cal-day.absent { background: var(--danger); color: white; }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🍗</div>
+        <div><div class="brand-name">Gà Mẹt Cẩm Phả</div><div class="brand-sub">Quản lý nhân sự</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Tổng quan</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-label">Nhân sự</div>
+      <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+      <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+      <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+      <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+      
+      <div class="nav-label admin-only">Tài chính</div>
+      <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+      <div class="nav-label admin-only">Hệ thống</div>
+      <a href="reports.html" class="nav-item active admin-only"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+      <a href="settings.html" class="nav-item admin-only"><i class="fas fa-cog"></i> Cài đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-panel">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-meta"><div class="user-name" id="sidebarName">...</div><div class="user-role" id="sidebarRole">...</div></div>
+        <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <div class="page-title">Báo cáo & Xuất file</div>
+        <div class="page-subtitle">Xuất dữ liệu chấm công và lương</div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="export-grid">
+        
+        <!-- Card 1: Attendance -->
+        <div class="card export-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-calendar-check" style="color:var(--info)"></i> 📊 Bảng Chấm Công</h3>
+          </div>
+          <div class="card-body">
+            <p class="form-hint" style="margin-bottom: 1rem;">Xuất file Excel chi tiết chấm công tháng</p>
+            
+            <div class="form-group">
+              <label class="form-label">Tháng</label>
+              <input type="month" id="attMonth" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nhân viên (Preview)</label>
+              <select id="attEmployee" class="form-control">
+                <option value="">-- Tất cả --</option>
+              </select>
+            </div>
+            
+            <div class="preview-box">
+              <h4>Preview (Lịch)</h4>
+              <div id="attPreview" class="calendar-preview">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="export-actions">
+              <button class="btn btn-success" onclick="doExportAttExcel()"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Payroll -->
+        <div class="card export-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-money-check-alt" style="color:var(--success)"></i> 💰 Bảng Lương</h3>
+          </div>
+          <div class="card-body">
+            <p class="form-hint" style="margin-bottom: 1rem;">Xuất bảng lương tháng dạng Excel hoặc PDF</p>
+            
+            <div class="form-group">
+              <label class="form-label">Tháng</label>
+              <input type="month" id="payMonth" class="form-control">
+            </div>
+            
+            <div class="preview-box" style="align-items: flex-start; text-align: left;">
+              <h4>Tổng quan tháng</h4>
+              <div id="payPreview">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="export-actions">
+              <button class="btn btn-success" onclick="doExportPayExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+              <button class="btn btn-danger" onclick="doExportPayPDFAll()"><i class="fas fa-file-pdf"></i> PDF (Tất cả)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Payslip -->
+        <div class="card export-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-receipt" style="color:var(--accent)"></i> 🧾 Phiếu Lương Cá Nhân</h3>
+          </div>
+          <div class="card-body">
+            <p class="form-hint" style="margin-bottom: 1rem;">Xuất phiếu lương riêng cho từng nhân viên</p>
+            
+            <div class="form-group">
+              <label class="form-label">Tháng</label>
+              <input type="month" id="slipMonth" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nhân viên</label>
+              <select id="slipEmployee" class="form-control">
+                <!-- Filled by JS -->
+              </select>
+            </div>
+            
+            <div class="preview-box">
+              <h4>Thực Lĩnh</h4>
+              <div id="slipPreview" style="font-size: 1.5rem; font-weight: 600; color: var(--accent); margin-top: 0.5rem;">
+                0đ
+              </div>
+            </div>
+
+            <div class="export-actions">
+              <button class="btn btn-danger" onclick="doExportPayslipPDF()"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Thống kê tháng -->
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 class="card-title">Thống kê tháng</h3>
+          <div class="filter-bar" style="margin:0;">
+            <input type="month" id="statMonth" class="form-control" style="width: 200px;">
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nhân viên</th>
+                <th>Ngày công</th>
+                <th>Đi muộn</th>
+                <th>Vi phạm</th>
+                <th>Trừ tiền</th>
+                <th>Thực lĩnh</th>
+              </tr>
+            </thead>
+            <tbody id="statTableBody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  <script>
+    // Init
+    seedData();
+    const session = requireAdmin();
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+      
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      
+      initSidebar();
+      initPage();
+    }
+
+    let employees = [];
+
+    function initPage() {
+      const currentMonth = Utils.currentMonth();
+      
+      document.getElementById('attMonth').value = currentMonth;
+      document.getElementById('payMonth').value = currentMonth;
+      document.getElementById('slipMonth').value = currentMonth;
+      document.getElementById('statMonth').value = currentMonth;
+
+      employees = Storage.getEmployees(true);
+      
+      const attEmpSelect = document.getElementById('attEmployee');
+      const slipEmpSelect = document.getElementById('slipEmployee');
+      
+      employees.forEach(emp => {
+        attEmpSelect.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+        slipEmpSelect.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+      });
+
+      // Listeners
+      document.getElementById('attMonth').addEventListener('change', updateAttPreview);
+      document.getElementById('attEmployee').addEventListener('change', updateAttPreview);
+      
+      document.getElementById('payMonth').addEventListener('change', updatePayPreview);
+      
+      document.getElementById('slipMonth').addEventListener('change', updateSlipPreview);
+      document.getElementById('slipEmployee').addEventListener('change', updateSlipPreview);
+      
+      document.getElementById('statMonth').addEventListener('change', updateStatsTable);
+
+      // Initial renders
+      updateAttPreview();
+      updatePayPreview();
+      updateSlipPreview();
+      updateStatsTable();
+    }
+
+    function updateAttPreview() {
+      const month = document.getElementById('attMonth').value;
+      const empId = document.getElementById('attEmployee').value;
+      const preview = document.getElementById('attPreview');
+      
+      preview.innerHTML = '';
+      if (!empId) {
+        preview.innerHTML = '<div style="grid-column: span 7; color: var(--text-muted); font-size:0.9rem; padding: 1rem 0;">Chọn nhân viên để xem trước lịch</div>';
+        return;
+      }
+
+      const summary = Attendance.getMonthlySummary(empId, month);
+      const records = summary.records; // Assuming this exists or we fetch directly
+      
+      const [y, m] = month.split('-');
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const d = String(i).padStart(2, '0');
+        const dateStr = `${month}-${d}`;
+        
+        let statusClass = '';
+        
+        const rec = records.find(r => r.date === dateStr);
+        if (rec) {
+           if (rec.status === 'late') statusClass = 'late';
+           else statusClass = 'present';
+        }
+        
+        preview.innerHTML += `<div class="cal-day ${statusClass}">${i}</div>`;
+      }
+    }
+
+    function updatePayPreview() {
+      const month = document.getElementById('payMonth').value;
+      const preview = document.getElementById('payPreview');
+      
+      let total = 0;
+      let count = 0;
+      
+      employees.forEach(emp => {
+        const pay = Payroll.calculate(emp.id, month);
+        if (pay && pay.workDays > 0) {
+          total += pay.netSalary;
+          count++;
+        }
+      });
+      
+      preview.innerHTML = `
+        <div style="margin-bottom:0.5rem"><strong>Nhân sự:</strong> ${count} nhân viên</div>
+        <div><strong>Tổng quỹ lương:</strong> <span style="color:var(--success); font-weight:bold;">${Utils.currency(total)}</span></div>
+      `;
+    }
+
+    function updateSlipPreview() {
+      const month = document.getElementById('slipMonth').value;
+      const empId = document.getElementById('slipEmployee').value;
+      const preview = document.getElementById('slipPreview');
+      
+      if (!empId) {
+        preview.textContent = '0đ';
+        return;
+      }
+      
+      const pay = Payroll.calculate(empId, month);
+      preview.textContent = pay ? Utils.currency(pay.netSalary) : '0đ';
+    }
+
+    function updateStatsTable() {
+      const month = document.getElementById('statMonth').value;
+      const tbody = document.getElementById('statTableBody');
+      tbody.innerHTML = '';
+      
+      employees.forEach(emp => {
+        const pay = Payroll.calculate(emp.id, month);
+        if (pay && (pay.workDays > 0 || pay.netSalary > 0)) {
+           const lateColor = (pay.lateCount || 0) > 0 ? 'color: var(--warning); font-weight:bold;' : '';
+           const penColor = (pay.lateViolationCount || 0) > 0 ? 'color: var(--danger); font-weight:bold;' : '';
+           
+           tbody.innerHTML += `
+             <tr>
+               <td><strong>${emp.name}</strong></td>
+               <td>${pay.workDays || 0}</td>
+               <td style="${lateColor}">${pay.lateCount || 0}</td>
+               <td style="${penColor}">${pay.lateViolationCount || 0}</td>
+               <td style="${penColor}">${Utils.currency(pay.lateDeduction || 0)}</td>
+               <td style="font-weight:bold; color:var(--success)">${Utils.currency(pay.netSalary || 0)}</td>
+             </tr>
+           `;
+        }
+      });
+      
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không có dữ liệu trong tháng này</td></tr>';
+      }
+    }
+
+    function doExportAttExcel() {
+      const month = document.getElementById('attMonth').value;
+      if (typeof Export !== 'undefined' && Export.attendanceExcel) {
+         Export.attendanceExcel(month);
+         Toast.success('Đã xuất Excel chấm công!');
+      } else {
+         Toast.info('Tính năng đang được phát triển');
+      }
+    }
+
+    function doExportPayExcel() {
+      const month = document.getElementById('payMonth').value;
+      if (typeof Export !== 'undefined' && Export.payrollExcel) {
+         Export.payrollExcel(month);
+         Toast.success('Đã xuất Excel bảng lương!');
+      } else {
+         Toast.info('Tính năng đang được phát triển');
+      }
+    }
+    
+    function doExportPayPDFAll() {
+      const month = document.getElementById('payMonth').value;
+      if (typeof Export !== 'undefined' && Export.payslipPDF) {
+         let count = 0;
+         employees.forEach(emp => {
+           const pay = Payroll.calculate(emp.id, month);
+           if (pay && (pay.workDays > 0 || pay.netSalary > 0)) {
+             Export.payslipPDF(emp.id, month);
+             count++;
+           }
+         });
+         Toast.success(`Đã xuất PDF phiếu lương cho ${count} nhân viên!`);
+      } else {
+         Toast.info('Tính năng đang được phát triển');
+      }
+    }
+
+    function doExportPayslipPDF() {
+      const month = document.getElementById('slipMonth').value;
+      const empId = document.getElementById('slipEmployee').value;
+      if (!empId) {
+        Toast.warning('Vui lòng chọn nhân viên');
+        return;
+      }
+      
+      if (typeof Export !== 'undefined' && Export.payslipPDF) {
+         Export.payslipPDF(empId, month);
+         Toast.success('Đã xuất PDF phiếu lương!');
+      } else {
+         Toast.info('Tính năng đang được phát triển');
+      }
+    }
+  </script>
+</body>
+</html>

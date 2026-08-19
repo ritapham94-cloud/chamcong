@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chấm công - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .checkin-big-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 40px 20px;
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto 32px;
+      box-shadow: var(--shadow);
+    }
+    .clock-display {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--text-color);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    .date-display {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .checkin-btn {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 0 auto;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .checkin-btn i {
+      font-size: 40px;
+    }
+    .state-in {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .state-out {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    .state-done {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    @keyframes pulse-orange {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    .state-in.pulse-btn {
+      animation: pulse 2s infinite;
+    }
+    .state-out.pulse-btn {
+      animation: pulse-orange 2s infinite;
+    }
+
+    .time-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .time-badge {
+      background: var(--bg-color);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 100px;
+    }
+    .time-badge .label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .time-badge .val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🍗</div>
+        <div><div class="brand-name">Gà Mẹt Cẩm Phả</div><div class="brand-sub">Quản lý nhân sự</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Tổng quan</div>
+      <a href="dashboard.html" class="nav-item admin-only"><i class="fas fa-th-large"></i> Dashboard</a>
+      
+      <div class="nav-label">Nhân sự</div>
+      <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+      <a href="attendance.html" class="nav-item active"><i class="fas fa-clock"></i> Chấm công</a>
+      <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+      <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+      
+      <div class="nav-label admin-only">Tài chính</div>
+      <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+      
+      <div class="nav-label admin-only">Hệ thống</div>
+      <a href="reports.html" class="nav-item admin-only"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+      <a href="settings.html" class="nav-item admin-only"><i class="fas fa-cog"></i> Cài đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-panel">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="sidebarName">...</div>
+          <div class="user-role" id="sidebarRole">...</div>
+        </div>
+        <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <div class="page-title">Chấm công</div>
+        <div class="page-subtitle" id="attendanceSubtitle">Hôm nay</div>
+      </div>
+      <div class="header-actions" id="adminHeaderActions" style="display:none;">
+        <button class="btn btn-primary" onclick="openManualModal()"><i class="fas fa-plus"></i> Thêm chấm công tay</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      
+      <!-- Employee View -->
+      <div id="employeeView" style="display:none;">
+        <div class="checkin-big-card">
+          <div class="clock-display" id="clockDisplay">00:00:00</div>
+          <div class="date-display" id="dateDisplay">Thứ ..., ngày ...</div>
+
+          <!-- WiFi Status Badge -->
+          <div id="wifiStatusBadge" style="margin-bottom:14px;display:none">
+            <span id="wifiStatusInner" style="display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:600"></span>
+          </div>
+
+          <div id="alertContainer" style="margin-bottom: 24px;"></div>
+
+          <button id="mainCheckBtn" class="checkin-btn state-in" onclick="handleCheckAction()">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>CHẤM CÔNG VÀO</span>
+          </button>
+          
+          <div class="form-group" style="margin-top:20px; max-width:200px; margin-left:auto; margin-right:auto; display:none;" id="shiftSelectGroup">
+            <select id="empShiftSelect" class="form-control" style="text-align:center;">
+              <!-- shifts -->
+            </select>
+          </div>
+
+          <div class="time-badges">
+            <div class="time-badge">
+              <span class="label">Giờ vào</span>
+              <span class="val" id="valCheckIn">--:--</span>
+            </div>
+            <div class="time-badge">
+              <span class="label">Giờ ra</span>
+              <span class="val" id="valCheckOut">--:--</span>
+            </div>
+            <div class="time-badge">
+              <span class="label">Tổng giờ</span>
+              <span class="val" id="valWorkHours">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Lịch sử 7 ngày gần đây</h3>
+          </div>
+          <div class="table-wrapper">
+            <table id="empHistoryTable">
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>Ca làm</th>
+                  <th>Giờ vào</th>
+                  <th>Giờ ra</th>
+                  <th>Tổng giờ</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Data -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin View -->
+      <div id="adminView" style="display:none;">
+        <div class="alert-banner info" style="margin-bottom: 24px;">
+          <i class="fas fa-info-circle"></i> Nội quy: Quá 5 lần đi muộn (dù < 10 phút) sẽ bị tính là vi phạm và trừ tiền.
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="filter-bar" style="display:flex; gap:12px; flex-wrap:wrap;">
+              <input type="date" id="adminDateFilter" class="form-control" onchange="renderAdminTable()">
+              <select id="adminEmpFilter" class="form-control" onchange="renderAdminTable()">
+                <option value="all">Tất cả nhân viên</option>
+                <!-- options -->
+              </select>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table id="adminTable">
+              <thead>
+                <tr>
+                  <th>Nhân viên</th>
+                  <th>Ca</th>
+                  <th>Giờ vào</th>
+                  <th>Giờ ra</th>
+                  <th>Giờ làm</th>
+                  <th>Muộn</th>
+                  <th>Về sớm</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align: right">Sửa</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Data -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Manual Entry Modal -->
+  <div class="modal-overlay" id="manualModal">
+    <div class="modal" style="width: 500px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="manualModalTitle">Thêm/Sửa chấm công</h3>
+        <button class="modal-close" onclick="Modal.close('manualModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="manualForm" onsubmit="event.preventDefault(); saveManualRecord();">
+          <input type="hidden" id="manualRecordId">
+          
+          <div class="form-group">
+            <label class="form-label">Ngày <span style="color:var(--danger)">*</span></label>
+            <input type="date" id="manualDate" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Nhân viên <span style="color:var(--danger)">*</span></label>
+            <select id="manualEmp" class="form-control" required>
+              <!-- options -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ca làm việc <span style="color:var(--danger)">*</span></label>
+            <select id="manualShift" class="form-control" required>
+              <!-- options -->
+            </select>
+          </div>
+
+          <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Giờ vào</label>
+              <input type="time" id="manualCheckIn" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giờ ra</label>
+              <input type="time" id="manualCheckOut" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ghi chú</label>
+            <input type="text" id="manualNote" class="form-control" placeholder="Lý do sửa, xin phép...">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modal.close('manualModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="document.getElementById('manualForm').requestSubmit()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script src="js/utils.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  
+  <script>
+    // Init
+    seedData();
+    const session = requireAuth();
+    let currentRecord = null;
+    let allShifts = [];
+    let allEmployees = [];
+    
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+
+      if (!Auth.isAdmin(session)) {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+      }
+
+      initSidebar();
+      initPage();
+    }
+
+    function initPage() {
+      allShifts = Storage.getShifts();
+      allEmployees = Storage.getEmployees(true); // active only
+
+      if (Auth.isEmployee(session)) {
+        document.getElementById('employeeView').style.display = 'block';
+        startClock('clockDisplay', 'dateDisplay');
+        initEmployeeView();
+      } else {
+        document.getElementById('adminView').style.display = 'block';
+        document.getElementById('adminHeaderActions').style.display = 'block';
+        
+        document.getElementById('adminDateFilter').value = Utils.today();
+        
+        const empSelect = document.getElementById('adminEmpFilter');
+        allEmployees.forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp.id;
+          opt.textContent = emp.name;
+          empSelect.appendChild(opt);
+        });
+
+        const manualEmpSelect = document.getElementById('manualEmp');
+        allEmployees.forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp.id;
+          opt.textContent = emp.name;
+          manualEmpSelect.appendChild(opt);
+        });
+
+        const manualShiftSelect = document.getElementById('manualShift');
+        allShifts.forEach(shift => {
+          const opt = document.createElement('option');
+          opt.value = shift.id;
+          opt.textContent = `${shift.name} (${shift.startTime}-${shift.endTime})`;
+          manualShiftSelect.appendChild(opt);
+        });
+
+        renderAdminTable();
+      }
+    }
+
+    // ================== EMPLOYEE VIEW ==================
+    function initEmployeeView() {
+      updateCheckinState();
+      renderEmpHistory();
+    }
+
+    function updateCheckinState() {
+      const btn = document.getElementById('mainCheckBtn');
+      const valIn = document.getElementById('valCheckIn');
+      const valOut = document.getElementById('valCheckOut');
+      const valHours = document.getElementById('valWorkHours');
+      const alertContainer = document.getElementById('alertContainer');
+      const shiftSelectGroup = document.getElementById('shiftSelectGroup');
+      const shiftSelect = document.getElementById('empShiftSelect');
+      
+      const record = Storage.getTodayRecord(session.employeeId);
+      currentRecord = record;
+      
+      // Clear non-wifi alerts
+      Array.from(alertContainer.children).forEach(el => {
+        if (!el.classList.contains('wifi-alert')) el.remove();
+      });
+      
+      if (!record || !record.checkIn) {
+        // Not checked in yet
+        btn.className = 'checkin-btn state-in pulse-btn';
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>CHẤM CÔNG VÀO</span>';
+        btn.disabled = false;
+        valIn.textContent = '--:--';
+        valOut.textContent = '--:--';
+        valHours.textContent = '--';
+        
+        // Show shift select
+        const emp = Storage.getEmployee(session.employeeId);
+        shiftSelect.innerHTML = '';
+        if (emp && emp.shiftIds && emp.shiftIds.length > 0) {
+          emp.shiftIds.forEach(id => {
+            const s = allShifts.find(x => x.id === id);
+            if(s) shiftSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.startTime}-${s.endTime})</option>`;
+          });
+        } else {
+          allShifts.forEach(s => {
+            shiftSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.startTime}-${s.endTime})</option>`;
+          });
+        }
+        shiftSelectGroup.style.display = 'block';
+        
+      } else if (!record.checkOut) {
+        // Checked in, not checked out
+        btn.className = 'checkin-btn state-out pulse-btn';
+        btn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span>CHẤM CÔNG RA</span>';
+        btn.disabled = false;
+        valIn.textContent = record.checkIn;
+        valOut.textContent = '--:--';
+        valHours.textContent = '--';
+        shiftSelectGroup.style.display = 'none';
+        
+        // Check alerts
+        if (record.lateMinutes > 0) {
+          const div = document.createElement('div');
+          div.className = record.isLateViolation ? 'alert-banner danger' : 'alert-banner warning';
+          div.innerHTML = record.isLateViolation
+            ? `<i class="fas fa-exclamation-triangle"></i> Đi muộn ${record.lateMinutes} phút — Vi phạm! Bị trừ lương.`
+            : `<i class="fas fa-exclamation-circle"></i> Đi muộn ${record.lateMinutes} phút (Còn lượt miễn).`;
+          alertContainer.appendChild(div);
+        }
+        
+      } else {
+        // Done
+        btn.className = 'checkin-btn state-done';
+        btn.innerHTML = '<i class="fas fa-check"></i><span>ĐÃ HOÀN THÀNH</span>';
+        btn.disabled = true;
+        valIn.textContent = record.checkIn;
+        valOut.textContent = record.checkOut;
+        valHours.textContent = record.workHours ? record.workHours.toFixed(1) + 'h' : '--';
+        shiftSelectGroup.style.display = 'none';
+      }
+
+      // Auto-check wifi status on load
+      checkAndShowWifi();
+    }
+
+    async function checkAndShowWifi() {
+      const empId = session ? session.employeeId : null;
+      const wifi = await Attendance.verifyWifi(empId);
+      updateWifiBadge(wifi);
+    }
+
+    function updateWifiBadge(wifi) {
+      const badge = document.getElementById('wifiStatusBadge');
+      const inner = document.getElementById('wifiStatusInner');
+      if (!badge || !inner) return;
+      if (wifi.skipped) {
+        badge.style.display = 'block';
+        inner.style.background = 'rgba(100,116,139,0.15)';
+        inner.style.color = 'var(--text-muted)';
+        inner.innerHTML = '<i class="fas fa-wifi"></i> Không yêu cầu WiFi';
+      } else if (wifi.ok) {
+        badge.style.display = 'block';
+        inner.style.background = 'rgba(34,197,94,0.12)';
+        inner.style.color = 'var(--success)';
+        inner.innerHTML = `<i class="fas fa-wifi"></i> Đang dùng WiFi quán ✓`;
+      } else {
+        badge.style.display = 'block';
+        inner.style.background = 'rgba(239,68,68,0.12)';
+        inner.style.color = 'var(--danger)';
+        inner.innerHTML = `<i class="fas fa-wifi-slash"></i> Chưa kết nối WiFi quán`;
+      }
+    }
+
+    async function handleCheckAction() {
+      const btn = document.getElementById('mainCheckBtn');
+      const origHTML = btn.innerHTML;
+
+      // Show loading
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Đang xác minh WiFi...</span>';
+
+      // WiFi check
+      const wifi = await Attendance.verifyWifi(session.employeeId);
+      updateWifiBadge(wifi);
+
+      if (!wifi.ok) {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+        Toast.error(wifi.message.split('\n')[0]);
+        // Show detailed alert
+        const ac = document.getElementById('alertContainer');
+        const existing = ac.querySelector('.wifi-alert');
+        if (existing) existing.remove();
+        const div = document.createElement('div');
+        div.className = 'alert-banner danger wifi-alert';
+        div.innerHTML = `<i class="fas fa-wifi"></i> <span>${wifi.message.replace(/\n/g,'<br>')}</span>`;
+        ac.prepend(div);
+        return;
+      }
+
+      // GPS Geofencing verification
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Đang kiểm tra vị trí GPS...</span>';
+      const gps = await Attendance.verifyGps(session.employeeId);
+      if (!gps.ok) {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+        Toast.error(gps.message.split('\n')[0]);
+        
+        const ac = document.getElementById('alertContainer');
+        const existing = ac.querySelector('.gps-alert');
+        if (existing) existing.remove();
+        const div = document.createElement('div');
+        div.className = 'alert-banner danger gps-alert';
+        div.innerHTML = `<i class="fas fa-crosshairs"></i> <span>${gps.message.replace(/\n/g,'<br>')}</span>`;
+        ac.prepend(div);
+        return;
+      }
+
+      if (!currentRecord || !currentRecord.checkIn) {
+        // Check in
+        const shiftId = document.getElementById('empShiftSelect').value;
+        if (!shiftId) {
+          btn.disabled = false;
+          btn.innerHTML = origHTML;
+          Toast.error('Vui lòng chọn ca làm việc');
+          return;
+        }
+        const res = Attendance.checkIn(session.employeeId, shiftId);
+        if (res.ok) {
+          Toast.success('Chấm công vào thành công ✓');
+          updateCheckinState();
+          renderEmpHistory();
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = origHTML;
+          Toast.error(res.message);
+        }
+      } else if (!currentRecord.checkOut) {
+        // Check out
+        const res = Attendance.checkOut(session.employeeId);
+        if (res.ok) {
+          Toast.success('Chấm công ra thành công ✓');
+          updateCheckinState();
+          renderEmpHistory();
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = origHTML;
+          Toast.error(res.message);
+        }
+      }
+    }
+
+    function renderEmpHistory() {
+      const tbody = document.querySelector('#empHistoryTable tbody');
+      
+      const records = Storage.getAttendance();
+      const myRecords = records.filter(r => r.employeeId === session.employeeId)
+                               .sort((a,b) => new Date(b.date) - new Date(a.date))
+                               .slice(0, 7); // last 7 days
+      
+      if (myRecords.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Chưa có dữ liệu</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = myRecords.map(r => {
+        const shift = allShifts.find(s => s.id === r.shiftId);
+        const shiftName = shift ? shift.name : '---';
+        const formattedDate = Utils.formatDate(r.date);
+        
+        let status = '';
+        if (r.lateViolation) {
+          status = '<span class="badge badge-danger">Vi phạm muộn</span>';
+        } else if (r.lateMinutes > 0) {
+          status = '<span class="badge badge-warning">Muộn (miễn)</span>';
+        } else {
+          status = '<span class="badge badge-success">Đúng giờ</span>';
+        }
+
+        return `
+          <tr>
+            <td>${formattedDate}</td>
+            <td>${shiftName}</td>
+            <td>${r.checkIn || '---'}</td>
+            <td>${r.checkOut || '---'}</td>
+            <td>${r.workHours ? r.workHours.toFixed(1) + 'h' : '---'}</td>
+            <td>${status}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ================== ADMIN VIEW ==================
+    function renderAdminTable() {
+      const date = document.getElementById('adminDateFilter').value;
+      const empFilter = document.getElementById('adminEmpFilter').value;
+      
+      const tbody = document.querySelector('#adminTable tbody');
+      
+      const allRecords = Storage.getAttendanceByDate(date);
+      
+      let displayData = [];
+
+      // If viewing today or past, we might want to show all active employees even if no record yet
+      allEmployees.forEach(emp => {
+        if (empFilter !== 'all' && emp.id !== empFilter) return;
+        
+        const record = allRecords.find(r => r.employeeId === emp.id);
+        
+        if (record) {
+          const shift = allShifts.find(s => s.id === record.shiftId);
+          displayData.push({
+            emp,
+            record,
+            shift
+          });
+        } else {
+          // No record yet
+          displayData.push({
+            emp,
+            record: null,
+            shift: null
+          });
+        }
+      });
+
+      if (displayData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">Không có dữ liệu</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = displayData.map(item => {
+        const r = item.record;
+        if (!r) {
+          return `
+            <tr>
+              <td><div class="emp-name">${item.emp.name}</div></td>
+              <td>---</td>
+              <td>---</td>
+              <td>---</td>
+              <td>---</td>
+              <td>---</td>
+              <td>---</td>
+              <td><span class="badge badge-neutral">Chưa chấm công</span></td>
+              <td style="text-align:right">
+                <button class="btn btn-icon btn-ghost" onclick="openManualModal('${item.emp.id}')" title="Thêm"><i class="fas fa-plus"></i></button>
+              </td>
+            </tr>
+          `;
+        }
+
+        let statusBadge = '<span class="badge badge-success">Bình thường</span>';
+        if (r.lateViolation) {
+          statusBadge = '<span class="badge badge-danger">Vi phạm muộn</span>';
+        } else if (r.lateMinutes > 0) {
+          statusBadge = '<span class="badge badge-warning">Muộn (miễn)</span>';
+        } else if (!r.checkOut) {
+          statusBadge = '<span class="badge badge-accent">Đang làm</span>';
+        }
+
+        return `
+          <tr>
+            <td>
+              <div class="emp-name">${item.emp.name}</div>
+              ${r.note ? `<div style="font-size:11px;color:var(--text-muted)">${r.note}</div>` : ''}
+            </td>
+            <td>${item.shift ? item.shift.name : '---'}</td>
+            <td>${r.checkIn || '---'}</td>
+            <td>${r.checkOut || '---'}</td>
+            <td>${r.workHours ? r.workHours.toFixed(1) + 'h' : '---'}</td>
+            <td style="color:${r.lateMinutes > 0 ? 'var(--danger)' : 'inherit'}">${r.lateMinutes || 0} p</td>
+            <td style="color:${r.earlyLeaveMinutes > 0 ? 'var(--warning)' : 'inherit'}">${r.earlyLeaveMinutes || 0} p</td>
+            <td>${statusBadge}</td>
+            <td style="text-align:right">
+              <button class="btn btn-icon btn-ghost" onclick="openManualModal('${item.emp.id}', '${r.id}')" title="Sửa"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openManualModal(empId = '', recordId = '') {
+      document.getElementById('manualForm').reset();
+      
+      const dateVal = document.getElementById('adminDateFilter').value || Utils.today();
+      document.getElementById('manualDate').value = dateVal;
+      document.getElementById('manualRecordId').value = recordId;
+      
+      if (empId) document.getElementById('manualEmp').value = empId;
+      
+      if (recordId) {
+        document.getElementById('manualModalTitle').textContent = 'Sửa chấm công';
+        const r = Storage.getAttendance().find(x => x.id === recordId);
+        if (r) {
+          document.getElementById('manualDate').value = r.date;
+          document.getElementById('manualShift').value = r.shiftId;
+          document.getElementById('manualCheckIn').value = r.checkIn || '';
+          document.getElementById('manualCheckOut').value = r.checkOut || '';
+          document.getElementById('manualNote').value = r.note || '';
+        }
+      } else {
+        document.getElementById('manualModalTitle').textContent = 'Thêm chấm công tay';
+      }
+      
+      Modal.open('manualModal');
+    }
+
+    function saveManualRecord() {
+      const data = {
+        id: document.getElementById('manualRecordId').value || undefined,
+        employeeId: document.getElementById('manualEmp').value,
+        shiftId: document.getElementById('manualShift').value,
+        date: document.getElementById('manualDate').value,
+        checkIn: document.getElementById('manualCheckIn').value || null,
+        checkOut: document.getElementById('manualCheckOut').value || null,
+        note: document.getElementById('manualNote').value || ''
+      };
+      
+      const res = Attendance.saveManual(data);
+      if (res.ok) {
+        Toast.success('Đã lưu chấm công');
+        Modal.close('manualModal');
+        renderAdminTable();
+      } else {
+        Toast.error(res.message || 'Lỗi lưu chấm công');
+      }
+    }
+  </script>
+</body>
+</html>

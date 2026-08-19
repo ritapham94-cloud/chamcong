@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài đặt hệ thống - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🍗</div>
+        <div><div class="brand-name">Gà Mẹt Cẩm Phả</div><div class="brand-sub">Quản lý nhân sự</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Tổng quan</div>
+      <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-label">Nhân sự</div>
+      <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+      <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+      <a href="my_payroll.html" class="nav-item"><i class="fas fa-wallet"></i> Lương của tôi</a>
+      <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+      
+      <div class="nav-label admin-only">Tài chính</div>
+      <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+      <div class="nav-label admin-only">Hệ thống</div>
+      <a href="reports.html" class="nav-item admin-only"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+      <a href="settings.html" class="nav-item active admin-only"><i class="fas fa-cog"></i> Cài đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-panel">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-meta"><div class="user-name" id="sidebarName">...</div><div class="user-role" id="sidebarRole">...</div></div>
+        <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <div class="page-title">Cài đặt</div>
+        <div class="page-subtitle">Cấu hình hệ thống Gà Mẹt Cẩm Phả</div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      
+      <!-- Section 0: Store Management -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title"><i class="fas fa-store"></i> Quản lý Cơ sở Kinh doanh</h3>
+            <div class="card-subtitle">Quản lý danh sách chi nhánh, địa chỉ, số điện thoại và trạng thái hoạt động</div>
+          </div>
+          <button class="btn btn-primary" onclick="openAddStoreModal()"><i class="fas fa-plus"></i> Thêm cơ sở kinh doanh</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Mã cơ sở</th>
+                <th>Tên cơ sở kinh doanh</th>
+                <th>Địa chỉ</th>
+                <th>Số điện thoại</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="storesTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 1: Policy -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-balance-scale"></i> Chính sách chấm công</h3>
+        </div>
+        <div class="card-body">
+          <form id="policyForm" onsubmit="savePolicy(event)">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Số lần được phép đi muộn/tháng (X)</label>
+                <input type="number" id="polLateAllowed" class="form-control" value="5" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số phút ân hạn (Y)</label>
+                <input type="number" id="polGraceMins" class="form-control" value="15" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phạt / lần vi phạm (Z) - VNĐ</label>
+                <input type="number" id="polPenaltyAmt" class="form-control" value="50000" min="0" step="1000">
+              </div>
+            </div>
+            
+            <div class="alert-banner info" style="margin-bottom: 1rem;">
+              <i class="fas fa-info-circle"></i> 
+              <span id="policyHint">Nhân viên được phép đi muộn hoặc về sớm X lần/tháng. Từ lần thứ (X+1), nếu đi muộn/về sớm ≥ Y phút, bị trừ Zđ/lần</span>
+            </div>
+            
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu chính sách</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Section WiFi: Chấm công bằng WiFi -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title"><i class="fas fa-wifi"></i> Chấm công bằng WiFi</h3>
+            <div class="card-subtitle">Chỉ cho phép chấm công khi nhân viên đang kết nối WiFi của quán</div>
+          </div>
+          <!-- Toggle switch -->
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-secondary)">
+            <span id="wifiToggleLabel">Tắt</span>
+            <div style="position:relative;width:44px;height:24px" onclick="toggleWifi()">
+              <input type="checkbox" id="wifiEnabled" style="opacity:0;width:0;height:0">
+              <span id="wifiSlider" style="position:absolute;inset:0;background:var(--text-muted);border-radius:12px;transition:.3s;cursor:pointer"></span>
+              <span id="wifiThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s"></span>
+            </div>
+          </label>
+        </div>
+
+        <div id="wifiConfigSection">
+          <div class="alert-banner info" style="margin-bottom:16px">
+            <i class="fas fa-info-circle"></i>
+            <span>Khi bật, nhân viên chỉ chấm công được khi điện thoại/máy tính đang kết nối WiFi của quán.
+            Cách hoạt động: Hệ thống kiểm tra địa chỉ IP công cộng — khi dùng WiFi quán, IP sẽ trùng với IP đã đăng ký.</span>
+          </div>
+
+          <div class="form-row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label class="form-label">Tên WiFi (hiển thị cho nhân viên)</label>
+              <input type="text" id="wifiName" class="form-control" placeholder="VD: WiFi Gà Mẹt, VNPT_Office...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">IP công cộng của quán</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="wifiAllowedIP" class="form-control" placeholder="VD: 14.187.x.x" readonly>
+                <button class="btn btn-secondary" onclick="detectIP()" id="detectIPBtn" style="white-space:nowrap">
+                  <i class="fas fa-search-location"></i> Lấy IP hiện tại
+                </button>
+              </div>
+              <div class="form-hint">Bấm nút trên khi đang kết nối WiFi của quán để tự động điền IP.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="saveWifiSettings()">
+              <i class="fas fa-save"></i> Lưu cài đặt WiFi
+            </button>
+            <div id="wifiCurrentIPDisplay" style="font-size:13px;color:var(--text-muted)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Shifts -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 class="card-title"><i class="fas fa-business-time"></i> Quản lý ca làm việc</h3>
+          <button class="btn btn-sm btn-primary" onclick="openShiftModal()"><i class="fas fa-plus"></i> Thêm ca</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tên ca</th>
+                <th>Giờ bắt đầu</th>
+                <th>Giờ kết thúc</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="shiftsTableBody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 3: Holidays -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 class="card-title"><i class="fas fa-calendar-star"></i> Ngày lễ</h3>
+          <button class="btn btn-sm btn-primary" onclick="openHolidayModal()"><i class="fas fa-plus"></i> Thêm ngày lễ</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Tên ngày lễ</th>
+                <th>Hệ số lương</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="holidaysTableBody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 4: Change Password -->
+      <div class="card" style="margin-bottom: 1.5rem; max-width: 600px;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-key"></i> Đổi mật khẩu</h3>
+        </div>
+        <div class="card-body">
+          <form id="pwdForm" onsubmit="changePassword(event)">
+            <div class="form-group">
+              <label class="form-label">Mật khẩu cũ</label>
+              <input type="password" id="oldPwd" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mật khẩu mới</label>
+              <input type="password" id="newPwd" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nhập lại mật khẩu mới</label>
+              <input type="password" id="confNewPwd" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Đổi mật khẩu</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <!-- Shift Modal -->
+  <div class="modal-overlay" id="shiftModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="shiftModalTitle">Thêm ca làm việc</h3>
+        <button class="modal-close" onclick="Modal.close('shiftModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="shiftForm">
+          <input type="hidden" id="shiftId">
+          <div class="form-group">
+            <label class="form-label">Tên ca</label>
+            <input type="text" id="shiftName" class="form-control" required placeholder="VD: Ca Sáng">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Giờ bắt đầu</label>
+              <input type="time" id="shiftStart" class="form-control" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Giờ kết thúc</label>
+              <input type="time" id="shiftEnd" class="form-control" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close('shiftModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveShift()"><i class="fas fa-save"></i> Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Holiday Modal -->
+  <div class="modal-overlay" id="holidayModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="holidayModalTitle">Thêm ngày lễ</h3>
+        <button class="modal-close" onclick="Modal.close('holidayModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="holidayForm">
+          <input type="hidden" id="holidayId">
+          <div class="form-group">
+            <label class="form-label">Ngày</label>
+            <input type="date" id="holDate" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tên ngày lễ</label>
+            <input type="text" id="holName" class="form-control" required placeholder="VD: Quốc Khánh">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hệ số lương</label>
+            <select id="holMulti" class="form-control">
+              <option value="1.5">x1.5</option>
+              <option value="2.0">x2.0</option>
+              <option value="3.0">x3.0</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close('holidayModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveHoliday()"><i class="fas fa-save"></i> Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Cơ Sở Kinh Doanh -->
+  <div class="modal-overlay" id="storeModal">
+    <div class="modal" style="width: 580px; max-width:95%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="storeModalTitle">Thêm cơ sở kinh doanh</h3>
+        <button class="modal-close" onclick="Modal.close('storeModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="storeId">
+        
+        <div style="font-weight:700; color:var(--accent); margin-bottom:10px; font-size:13.5px;"><i class="fas fa-store"></i> 1. THÔNG TIN CƠ BẢN CƠ SỞ</div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Tên cơ sở kinh doanh <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="storeName" class="form-control" placeholder="VD: Gà Mẹt Cẩm Phả - Cơ Sở 5 (Vân Đồn)">
+        </div>
+        <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom: 1rem;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Mã cơ sở <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="storeCode" class="form-control" placeholder="VD: GMCP-05">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Số điện thoại</label>
+            <input type="text" id="storePhone" class="form-control" placeholder="VD: 0905123456">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Địa chỉ cơ sở</label>
+          <input type="text" id="storeAddress" class="form-control" placeholder="VD: Số 88 Khu phố 4, Vân Đồn, Quảng Ninh">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label class="form-label">Trạng thái hoạt động</label>
+          <select id="storeActive" class="form-control">
+            <option value="true">Đang hoạt động</option>
+            <option value="false">Ngừng hoạt động</option>
+          </select>
+        </div>
+
+        <div style="font-weight:700; color:var(--accent); margin-bottom:10px; font-size:13.5px; border-top:1px solid var(--border-color); padding-top:14px;"><i class="fas fa-location-arrow"></i> 2. CÀI ĐẶT GPS GEOFENCING CƠ SỞ</div>
+        <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Kiểm tra GPS</label>
+            <select id="modalGpsEnabled" class="form-control">
+              <option value="true">BẬT (Yêu cầu GPS trong bán kính)</option>
+              <option value="false">TẮT (Không yêu cầu GPS)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Bán kính cho phép (mét)</label>
+            <input type="number" id="modalGpsRadius" class="form-control" value="100" min="10" max="5000">
+          </div>
+        </div>
+
+        <div style="background:var(--bg-lighter, rgba(255,255,255,0.03)); padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:12.5px; font-weight:600;"><i class="fas fa-crosshairs"></i> Tọa độ GPS của cơ sở</span>
+            <button type="button" class="btn btn-sm btn-success" onclick="getAdminCurrentGpsModal()"><i class="fas fa-location-arrow"></i> 📍 Lấy GPS hiện tại</button>
+          </div>
+          <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <input type="text" id="modalGpsLat" class="form-control" placeholder="Vĩ độ (Lat)" style="font-size:13px;">
+            <input type="text" id="modalGpsLng" class="form-control" placeholder="Kinh độ (Lng)" style="font-size:13px;">
+          </div>
+        </div>
+
+        <div style="font-weight:700; color:var(--accent); margin-bottom:10px; font-size:13.5px; border-top:1px solid var(--border-color); padding-top:14px;"><i class="fas fa-wifi"></i> 3. CÀI ĐẶT WIFI CHẤM CÔNG CƠ SỞ</div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Kiểm tra WiFi quán</label>
+          <select id="modalWifiEnabled" class="form-control">
+            <option value="false">TẮT (Không bắt buộc WiFi)</option>
+            <option value="true">BẬT (Yêu cầu kết nối WiFi quán)</option>
+          </select>
+        </div>
+        <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Tên WiFi (SSID)</label>
+            <input type="text" id="modalWifiName" class="form-control" placeholder="VD: WiFi Ga Met CS5">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="margin:0;">IP công cộng</label>
+              <button type="button" class="btn btn-xs btn-ghost" onclick="fetchPublicIpForModal()" style="font-size:11px; padding:0 4px; color:var(--info);">⚡ Lấy IP hiện tại</button>
+            </div>
+            <input type="text" id="modalAllowedIP" class="form-control" placeholder="VD: 113.190.12.34">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close('storeModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveStoreModal()"><i class="fas fa-save"></i> Lưu thông tin cơ sở</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thiết Lập Vị Trí GPS Cơ Sở -->
+  <div class="modal-overlay" id="storeGpsModal">
+    <div class="modal" style="width: 540px; max-width:95%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="storeGpsModalTitle">Thiết lập vị trí GPS chấm công</h3>
+        <button class="modal-close" onclick="Modal.close('storeGpsModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="gpsStoreId">
+        
+        <div class="alert-banner info" style="margin-bottom: 1rem;">
+          <i class="fas fa-info-circle"></i>
+          <span>Khi bật GPS, nhân viên chỉ chấm công được khi đứng trong bán kính cho phép quanh vị trí cơ sở.</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Yêu cầu GPS chấm công</label>
+          <select id="gpsEnabledSelect" class="form-control">
+            <option value="true">BẬT (Bắt buộc GPS trong bán kính)</option>
+            <option value="false">TẮT (Cho phép chấm công không cần GPS)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label">Bán kính chấm công cho phép (mét) <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="gpsRadiusMeters" class="form-control" value="100" min="10" max="5000">
+          <small style="color:var(--text-muted);display:block;margin-top:4px;">Mặc định 100m. Cho phép nhân viên chấm công khi đứng trong khoảng cách này.</small>
+        </div>
+
+        <div style="background:var(--bg-lighter, rgba(255,255,255,0.03)); padding:14px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="font-size:13.5px;"><i class="fas fa-crosshairs"></i> Tọa độ vị trí quán</strong>
+            <button type="button" class="btn btn-sm btn-success" onclick="getAdminCurrentGps()"><i class="fas fa-location-arrow"></i> 📍 Lấy GPS hiện tại của tôi</button>
+          </div>
+
+          <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:12px;">Vĩ độ (Latitude)</label>
+              <input type="text" id="gpsLat" class="form-control" placeholder="Ví dụ: 21.012345">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:12px;">Kinh độ (Longitude)</label>
+              <input type="text" id="gpsLng" class="form-control" placeholder="Ví dụ: 107.345678">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close('storeGpsModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveStoreGpsModal()"><i class="fas fa-save"></i> Xác nhận & Lưu tọa độ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  <script>
+    // Init
+    seedData();
+    const session = requireAdmin();
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+      
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      
+      initSidebar();
+      initPage();
+    }
+
+    function initPage() {
+      // Load Policy
+      const settings = Storage.getSettings();
+      document.getElementById('polLateAllowed').value = settings.latePolicy ? settings.latePolicy.freePassesPerMonth : 5;
+      document.getElementById('polGraceMins').value = settings.latePolicy ? settings.latePolicy.minLateMinutes : 15;
+      document.getElementById('polPenaltyAmt').value = settings.latePolicy ? settings.latePolicy.deductionPerOccurrence : 50000;
+      
+      updatePolicyHint();
+      
+      document.getElementById('polLateAllowed').addEventListener('input', updatePolicyHint);
+      document.getElementById('polGraceMins').addEventListener('input', updatePolicyHint);
+      document.getElementById('polPenaltyAmt').addEventListener('input', updatePolicyHint);
+
+      renderStores();
+      initWifiSection();
+      renderShifts();
+      renderHolidays();
+    }
+
+    // ── Stores Management ─────────────────────────────────────────────────────
+    function renderStores() {
+      const tbody = document.getElementById('storesTableBody');
+      if (!tbody) return;
+      
+      const stores = Storage.getStores();
+      if (stores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Chưa có cơ sở kinh doanh nào.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = stores.map(s => {
+        const isActive = s.active !== false;
+        const statusBadge = isActive
+          ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Đang hoạt động</span>'
+          : '<span class="badge badge-neutral"><i class="fas fa-ban"></i> Ngừng hoạt động</span>';
+        
+        return `
+          <tr>
+            <td><strong>${s.code || '---'}</strong></td>
+            <td>${s.name} ${s.isPrimary ? '<span class="badge badge-info" style="font-size:10px;margin-left:4px;">Cơ sở chính</span>' : ''}</td>
+            <td>${s.address || 'Chưa cập nhật'}</td>
+            <td>${s.phone || 'Chưa cập nhật'}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align:right">
+              <button class="btn btn-sm ${s.gpsEnabled ? 'btn-success' : 'btn-outline'}" onclick="openGpsModal('${s.id}')" title="Thiết lập vị trí GPS chấm công" style="margin-right:4px;">
+                <i class="fas fa-location-arrow"></i> ${s.gpsEnabled ? `GPS (${s.radiusMeters || 100}m)` : 'Vị trí GPS'}
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditStoreModal('${s.id}')" title="Sửa thông tin"><i class="fas fa-edit"></i> Sửa</button>
+              <button class="btn btn-sm ${isActive ? 'btn-outline' : 'btn-success'}" onclick="toggleStoreStatus('${s.id}')" style="margin-left:4px;" title="Chuyển trạng thái">
+                <i class="fas ${isActive ? 'fa-power-off' : 'fa-play'}"></i> ${isActive ? 'Tắt' : 'Bật'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openAddStoreModal() {
+      document.getElementById('storeModalTitle').textContent = 'Thêm cơ sở kinh doanh mới';
+      document.getElementById('storeId').value = '';
+      document.getElementById('storeName').value = '';
+      document.getElementById('storeCode').value = 'GMCP-0' + (Storage.getStores().length + 1);
+      document.getElementById('storeAddress').value = '';
+      document.getElementById('storePhone').value = '';
+      document.getElementById('storeActive').value = 'true';
+
+      // Reset GPS & WiFi settings
+      document.getElementById('modalGpsEnabled').value = 'false';
+      document.getElementById('modalGpsRadius').value = '100';
+      document.getElementById('modalGpsLat').value = '';
+      document.getElementById('modalGpsLng').value = '';
+      document.getElementById('modalWifiEnabled').value = 'false';
+      document.getElementById('modalWifiName').value = '';
+      document.getElementById('modalAllowedIP').value = '';
+
+      Modal.open('storeModal');
+    }
+
+    function openEditStoreModal(id) {
+      const store = Storage.getStore(id);
+      if (!store) return;
+      document.getElementById('storeModalTitle').textContent = 'Chỉnh sửa cơ sở kinh doanh';
+      document.getElementById('storeId').value = store.id;
+      document.getElementById('storeName').value = store.name || '';
+      document.getElementById('storeCode').value = store.code || '';
+      document.getElementById('storeAddress').value = store.address || '';
+      document.getElementById('storePhone').value = store.phone || '';
+      document.getElementById('storeActive').value = store.active !== false ? 'true' : 'false';
+
+      // Load store GPS & WiFi settings
+      document.getElementById('modalGpsEnabled').value = store.gpsEnabled ? 'true' : 'false';
+      document.getElementById('modalGpsRadius').value = store.radiusMeters || 100;
+      document.getElementById('modalGpsLat').value = store.lat || '';
+      document.getElementById('modalGpsLng').value = store.lng || '';
+      document.getElementById('modalWifiEnabled').value = store.wifiEnabled ? 'true' : 'false';
+      document.getElementById('modalWifiName').value = store.wifiName || '';
+      document.getElementById('modalAllowedIP').value = store.allowedIP || '';
+
+      Modal.open('storeModal');
+    }
+
+    function getAdminCurrentGpsModal() {
+      if (!navigator.geolocation) {
+        Toast.error('Trình duyệt không hỗ trợ định vị GPS!');
+        return;
+      }
+      Toast.info('Đang xin quyền và lấy GPS hiện tại...');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          document.getElementById('modalGpsLat').value = lat;
+          document.getElementById('modalGpsLng').value = lng;
+          Toast.success(`Đã lấy vị trí GPS thành công!\nVĩ độ: ${lat}\nKinh độ: ${lng}`);
+        },
+        (err) => Toast.error('Không thể lấy vị trí GPS từ thiết bị.'),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    async function fetchPublicIpForModal() {
+      Toast.info('Đang lấy IP công cộng...');
+      const ip = await Attendance.fetchPublicIP();
+      if (ip) {
+        document.getElementById('modalAllowedIP').value = ip;
+        Toast.success('Đã lấy IP công cộng thành công: ' + ip);
+      } else {
+        Toast.error('Không thể lấy IP công cộng. Vui lòng tự nhập.');
+      }
+    }
+
+    function saveStoreModal() {
+      const id = document.getElementById('storeId').value;
+      const name = document.getElementById('storeName').value.trim();
+      const code = document.getElementById('storeCode').value.trim();
+      const address = document.getElementById('storeAddress').value.trim();
+      const phone = document.getElementById('storePhone').value.trim();
+      const active = document.getElementById('storeActive').value === 'true';
+
+      if (!name) {
+        Toast.warning('Vui lòng nhập Tên cơ sở kinh doanh');
+        return;
+      }
+      if (!code) {
+        Toast.warning('Vui lòng nhập Mã cơ sở');
+        return;
+      }
+
+      const storeData = {
+        id: id || ('store-' + Date.now()),
+        code,
+        name,
+        address,
+        phone,
+        active
+      };
+
+      Storage.saveStore(storeData);
+      Toast.success(id ? 'Cập nhật cơ sở thành công!' : 'Thêm cơ sở kinh doanh thành công!');
+      Modal.close('storeModal');
+      renderStores();
+
+      // Refresh store dropdown on header if available
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications();
+      }
+    }
+
+    function toggleStoreStatus(id) {
+      const store = Storage.getStore(id);
+      if (!store) return;
+
+      const newStatus = store.active === false ? true : false;
+      store.active = newStatus;
+      Storage.saveStore(store);
+
+      Toast.info(`Đã ${newStatus ? 'bật hoạt động' : 'ngừng hoạt động'} cơ sở ${store.name}`);
+      renderStores();
+
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications();
+      }
+    }
+
+    // ── GPS Geofencing Admin Setup ──────────────────────────────────────────
+    function openGpsModal(storeId) {
+      const store = Storage.getStore(storeId);
+      if (!store) return;
+
+      document.getElementById('gpsStoreId').value = store.id;
+      document.getElementById('storeGpsModalTitle').textContent = `Thiết lập vị trí GPS - ${store.name}`;
+      document.getElementById('gpsEnabledSelect').value = store.gpsEnabled ? 'true' : 'false';
+      document.getElementById('gpsRadiusMeters').value = store.radiusMeters || 100;
+      document.getElementById('gpsLat').value = store.lat || '';
+      document.getElementById('gpsLng').value = store.lng || '';
+
+      Modal.open('storeGpsModal');
+    }
+
+    function getAdminCurrentGps() {
+      if (!navigator.geolocation) {
+        Toast.error('Trình duyệt của bạn không hỗ trợ định vị GPS!');
+        return;
+      }
+
+      Toast.info('Đang xin quyền và lấy vị trí GPS hiện tại...');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          document.getElementById('gpsLat').value = lat;
+          document.getElementById('gpsLng').value = lng;
+          Toast.success(`Đã lấy vị trí GPS thành công!\nVĩ độ: ${lat}\nKinh độ: ${lng}\n\nBấm "Xác nhận & Lưu tọa độ" để lưu.`);
+        },
+        (err) => {
+          let msg = 'Không thể lấy vị trí GPS từ thiết bị.';
+          if (err.code === err.PERMISSION_DENIED) {
+            msg = 'Vui lòng cho phép truy cập vị trí (GPS) trên thiết bị!';
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            msg = 'Tín hiệu GPS chưa sẵn sàng. Vui lòng thử lại!';
+          } else if (err.code === err.TIMEOUT) {
+            msg = 'Hết thời gian lấy GPS. Vui lòng thử lại!';
+          }
+          Toast.error(msg);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    function saveStoreGpsModal() {
+      const storeId = document.getElementById('gpsStoreId').value;
+      const store = Storage.getStore(storeId);
+      if (!store) return;
+
+      const gpsEnabled = document.getElementById('gpsEnabledSelect').value === 'true';
+      const radiusMeters = Number(document.getElementById('gpsRadiusMeters').value) || 100;
+      const latStr = document.getElementById('gpsLat').value.trim();
+      const lngStr = document.getElementById('gpsLng').value.trim();
+
+      if (gpsEnabled && (!latStr || !lngStr)) {
+        Toast.warning('Khi BẬT GPS chấm công, vui lòng lấy hoặc nhập Tọa độ (Vĩ độ & Kinh độ)');
+        return;
+      }
+
+      store.gpsEnabled = gpsEnabled;
+      store.radiusMeters = radiusMeters;
+      store.lat = latStr ? Number(latStr) : null;
+      store.lng = lngStr ? Number(lngStr) : null;
+
+      Storage.saveStore(store);
+      Toast.success(`Đã lưu vị trí GPS cho cơ sở ${store.name}!`);
+      Modal.close('storeGpsModal');
+      renderStores();
+    }
+
+    // ── WiFi Settings ─────────────────────────────────────────────────────────
+    function initWifiSection() {
+      const settings = Storage.getSettings();
+      const cfg = settings.wifiCheck || { enabled: false, allowedIP: '', wifiName: '' };
+      const enabled = cfg.enabled;
+      document.getElementById('wifiEnabled').checked = enabled;
+      document.getElementById('wifiName').value = cfg.wifiName || '';
+      document.getElementById('wifiAllowedIP').value = cfg.allowedIP || '';
+      updateWifiToggleUI(enabled);
+    }
+
+    function toggleWifi() {
+      const cb = document.getElementById('wifiEnabled');
+      cb.checked = !cb.checked;
+      updateWifiToggleUI(cb.checked);
+    }
+
+    function updateWifiToggleUI(enabled) {
+      const slider = document.getElementById('wifiSlider');
+      const thumb = document.getElementById('wifiThumb');
+      const label = document.getElementById('wifiToggleLabel');
+      if (enabled) {
+        slider.style.background = 'var(--accent)';
+        thumb.style.left = '23px';
+        label.textContent = 'Bật';
+        label.style.color = 'var(--accent)';
+      } else {
+        slider.style.background = 'var(--text-muted)';
+        thumb.style.left = '3px';
+        label.textContent = 'Tắt';
+        label.style.color = 'var(--text-secondary)';
+      }
+    }
+
+    async function detectIP() {
+      const btn = document.getElementById('detectIPBtn');
+      const display = document.getElementById('wifiCurrentIPDisplay');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy IP...';
+      display.textContent = '';
+      
+      const ip = await Attendance.fetchPublicIP();
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-search-location"></i> Lấy IP hiện tại';
+      
+      if (ip) {
+        document.getElementById('wifiAllowedIP').value = ip;
+        display.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> IP hiện tại: <strong>${ip}</strong> — Đã điền vào ô. Nhấn 'Lưu' để đăng ký.`;
+        Toast.info('IP đã được điền — nhấn Lưu cài đặt WiFi để hoàn tất.');
+      } else {
+        display.innerHTML = `<i class="fas fa-times-circle" style="color:var(--danger)"></i> Không lấy được IP. Kiểm tra kết nối mạng.`;
+        Toast.error('Không thể xác định IP. Hãy kiểm tra kết nối Internet.');
+      }
+    }
+
+    function saveWifiSettings() {
+      const enabled = document.getElementById('wifiEnabled').checked;
+      const allowedIP = document.getElementById('wifiAllowedIP').value.trim();
+      const wifiName = document.getElementById('wifiName').value.trim();
+
+      if (enabled && !allowedIP) {
+        Toast.warning('Vui lòng nhấn “Lấy IP hiện tại” khi đang dùng WiFi quán rồi mới bật.');
+        return;
+      }
+
+      const settings = Storage.getSettings();
+      settings.wifiCheck = { enabled, allowedIP, wifiName };
+      Storage.saveSettings(settings);
+      Toast.success(enabled
+        ? `Đã bật chấm công WiFi. IP quán: ${allowedIP}`
+        : 'Chấm công WiFi đã tắt.');
+    }
+
+    function updatePolicyHint() {
+      const x = document.getElementById('polLateAllowed').value || 0;
+      const y = document.getElementById('polGraceMins').value || 0;
+      const z = Utils.currency(document.getElementById('polPenaltyAmt').value || 0);
+      document.getElementById('policyHint').textContent = `Nhân viên được phép đi muộn hoặc về sớm ${x} lần/tháng. Từ lần thứ (${parseInt(x)+1}), nếu đi muộn/về sớm ≥ ${y} phút, bị trừ ${z}/lần`;
+    }
+
+    function savePolicy(e) {
+      e.preventDefault();
+      const settings = Storage.getSettings();
+      settings.latePolicy = {
+        freePassesPerMonth: parseInt(document.getElementById('polLateAllowed').value) || 0,
+        minLateMinutes: parseInt(document.getElementById('polGraceMins').value) || 0,
+        deductionPerOccurrence: parseInt(document.getElementById('polPenaltyAmt').value) || 0
+      };
+      
+      Storage.saveSettings(settings);
+      Toast.success('Đã lưu chính sách chấm công!');
+    }
+
+    // --- Shifts ---
+    function renderShifts() {
+      const shifts = Storage.getShifts();
+      const tbody = document.getElementById('shiftsTableBody');
+      tbody.innerHTML = '';
+      
+      shifts.forEach(s => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${s.name}</strong></td>
+            <td>${s.startTime}</td>
+            <td>${s.endTime}</td>
+            <td>
+              <button class="btn btn-sm btn-icon btn-secondary" onclick="editShift('${s.id}')"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-icon btn-danger" onclick="delShift('${s.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openShiftModal(id = null) {
+      const modalForm = document.getElementById('shiftForm');
+      modalForm.reset();
+      
+      if (id) {
+        document.getElementById('shiftModalTitle').textContent = 'Sửa ca làm việc';
+        const shift = Storage.getShift(id);
+        if (shift) {
+          document.getElementById('shiftId').value = shift.id;
+          document.getElementById('shiftName').value = shift.name;
+          document.getElementById('shiftStart').value = shift.startTime;
+          document.getElementById('shiftEnd').value = shift.endTime;
+        }
+      } else {
+        document.getElementById('shiftModalTitle').textContent = 'Thêm ca làm việc';
+        document.getElementById('shiftId').value = '';
+      }
+      
+      Modal.open('shiftModal');
+    }
+
+    function editShift(id) {
+      openShiftModal(id);
+    }
+
+    function saveShift() {
+      const id = document.getElementById('shiftId').value;
+      const name = document.getElementById('shiftName').value;
+      const start = document.getElementById('shiftStart').value;
+      const end = document.getElementById('shiftEnd').value;
+      
+      if (!name || !start || !end) {
+        Toast.warning('Vui lòng nhập đủ thông tin');
+        return;
+      }
+      
+      const shift = {
+        id: id || Utils.uuid(),
+        name,
+        startTime: start,
+        endTime: end
+      };
+      
+      Storage.saveShift(shift);
+      Modal.close('shiftModal');
+      Toast.success('Đã lưu ca làm việc');
+      renderShifts();
+    }
+
+    async function delShift(id) {
+      if (await confirm('Bạn có chắc chắn muốn xóa ca này? Các nhân viên đang dùng ca này có thể bị ảnh hưởng.', 'Xóa ca làm việc?')) {
+        Storage.deleteShift(id);
+        Toast.success('Đã xóa ca làm việc');
+        renderShifts();
+      }
+    }
+
+    // --- Holidays ---
+    function renderHolidays() {
+      const hols = Storage.getHolidays();
+      const tbody = document.getElementById('holidaysTableBody');
+      tbody.innerHTML = '';
+      
+      hols.forEach(h => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${Utils.formatDate(h.date)}</td>
+            <td><strong>${h.name}</strong></td>
+            <td><span class="badge badge-accent">x${h.multiplier}</span></td>
+            <td>
+              <button class="btn btn-sm btn-icon btn-danger" onclick="delHoliday('${h.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      if (hols.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Chưa có ngày lễ nào</td></tr>';
+      }
+    }
+
+    function openHolidayModal() {
+      document.getElementById('holidayForm').reset();
+      document.getElementById('holidayId').value = '';
+      Modal.open('holidayModal');
+    }
+
+    function saveHoliday() {
+      const date = document.getElementById('holDate').value;
+      const name = document.getElementById('holName').value;
+      const multi = parseFloat(document.getElementById('holMulti').value);
+      
+      if (!date || !name) {
+        Toast.warning('Vui lòng nhập đủ thông tin');
+        return;
+      }
+      
+      const hol = {
+        id: Utils.uuid(),
+        date,
+        name,
+        multiplier: multi
+      };
+      
+      Storage.saveHoliday(hol);
+      Modal.close('holidayModal');
+      Toast.success('Đã thêm ngày lễ');
+      renderHolidays();
+    }
+
+    async function delHoliday(id) {
+      if (await confirm('Bạn có chắc chắn muốn xóa ngày lễ này?', 'Xóa ngày lễ?')) {
+        Storage.deleteHoliday(id);
+        Toast.success('Đã xóa ngày lễ');
+        renderHolidays();
+      }
+    }
+
+    // --- Password ---
+    function changePassword(e) {
+      e.preventDefault();
+      const oldP = document.getElementById('oldPwd').value;
+      const newP = document.getElementById('newPwd').value;
+      const conf = document.getElementById('confNewPwd').value;
+      
+      if (newP !== conf) {
+        Toast.error('Mật khẩu mới không khớp!');
+        return;
+      }
+      
+      if (Auth.changePassword) {
+         const ok = Auth.changePassword(session.employeeId, oldP, newP);
+         if (ok) {
+           Toast.success('Đổi mật khẩu thành công!');
+           document.getElementById('pwdForm').reset();
+         } else {
+           Toast.error('Mật khẩu cũ không đúng!');
+         }
+      } else {
+         Toast.info('Tính năng đang được phát triển (API Auth.changePassword)');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lương Của Tôi - Gà Mẹt Cẩm Phả</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .salary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card.net-pay {
+      background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.05));
+      border: 1px solid var(--accent);
+    }
+    .stat-card.net-pay .stat-value {
+      color: var(--accent);
+      font-size: 28px;
+    }
+    .payslip-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .payslip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 20px;
+    }
+    .payslip-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 16px 0 8px;
+    }
+    .payslip-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .payslip-row.total {
+      font-weight: 700;
+      font-size: 15px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: none;
+    }
+    .payslip-row.grand-total {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(249,115,22,0.08);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin-top: 16px;
+      border: 1px solid rgba(249,115,22,0.2);
+    }
+    .advances-list {
+      margin-top: 8px;
+      padding-left: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .advance-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">🍗</div>
+          <div>
+            <div class="brand-name">Gà Mẹt Cẩm Phả</div>
+            <div class="brand-sub">Quản lý chấm công & lương</div>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Chính</div>
+        <a href="dashboard.html" class="nav-item admin-only"><i class="fas fa-th-large"></i> Dashboard</a>
+        
+        <div class="nav-label">Nhân sự</div>
+        <a href="employees.html" class="nav-item admin-only"><i class="fas fa-users"></i> Nhân viên</a>
+        <a href="attendance.html" class="nav-item"><i class="fas fa-clock"></i> Chấm công</a>
+        <a href="my_payroll.html" class="nav-item active"><i class="fas fa-wallet"></i> Lương của tôi</a>
+        <a href="contracts.html" class="nav-item"><i class="fas fa-file-signature"></i> Hợp đồng lao động</a>
+        
+        <div class="nav-label admin-only">Tài chính</div>
+        <a href="payroll.html" class="nav-item admin-only"><i class="fas fa-money-bill-wave"></i> Tính lương (Admin)</a>
+        
+        <div class="nav-label">Hệ thống</div>
+        <a href="reports.html" class="nav-item admin-only"><i class="fas fa-file-export"></i> Báo cáo & Xuất file</a>
+        <a href="settings.html" class="nav-item admin-only"><i class="fas fa-cog"></i> Cài đặt</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-panel">
+          <div class="avatar" id="sidebarAvatar">?</div>
+          <div class="user-meta">
+            <div class="user-name" id="sidebarName">...</div>
+            <div class="user-role" id="sidebarRole">...</div>
+          </div>
+          <i class="fas fa-sign-out-alt" style="color:var(--text-muted);font-size:14px;cursor:pointer;" onclick="Auth.logout()" title="Đăng xuất"></i>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="page-header">
+        <div class="header-left">
+          <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+          <div class="page-title">Lương Của Tôi</div>
+          <div class="page-subtitle">Xem phiếu lương & thu nhập cá nhân</div>
+        </div>
+        <div class="header-actions">
+          <input type="month" id="monthSelector" class="form-control" style="width: 170px;">
+          <button class="btn btn-secondary" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+        </div>
+      </header>
+
+      <div class="page-body">
+        
+        <!-- Stats Grid -->
+        <div class="salary-stats">
+          <div class="stat-card net-pay">
+            <div class="stat-header">
+              <span class="stat-title">💰 Thực Lĩnh Tháng</span>
+              <span class="stat-icon" style="color:var(--accent)"><i class="fas fa-coins"></i></span>
+            </div>
+            <div class="stat-value" id="statNetPay">0 ₫</div>
+            <div class="stat-hint" id="statStatusBadge">Chờ chi trả</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">💼 Lương CB & Phụ Cấp</span>
+              <span class="stat-icon" style="color:var(--info)"><i class="fas fa-briefcase"></i></span>
+            </div>
+            <div class="stat-value" id="statBasePlusAllow">0 ₫</div>
+            <div class="stat-hint" id="statWorkNote">0 ngày công</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">⚠️ Phạt Muộn / Khấu Trừ</span>
+              <span class="stat-icon" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i></span>
+            </div>
+            <div class="stat-value" style="color:var(--danger)" id="statPenalty">0 ₫</div>
+            <div class="stat-hint" id="statLateNote">0 lần vi phạm</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">💸 Tạm Ứng Đã Nhận</span>
+              <span class="stat-icon" style="color:var(--warning)"><i class="fas fa-hand-holding-usd"></i></span>
+            </div>
+            <div class="stat-value" style="color:var(--warning)" id="statAdvances">0 ₫</div>
+            <div class="stat-hint" id="statAdvancesCount">0 khoản tạm ứng</div>
+          </div>
+        </div>
+
+        <!-- Detailed Payslip Card -->
+        <div class="payslip-card">
+          <div class="payslip-header">
+            <div>
+              <h3 style="font-size:18px;font-weight:700" id="payslipTitle">PHIẾU LƯƠNG NHÂN VIÊN</h3>
+              <div style="font-size:13px;color:var(--text-muted)" id="payslipSub">Tháng --/----</div>
+            </div>
+            <div id="payslipBadge">
+              <span class="badge badge-warning">Chờ chi trả</span>
+            </div>
+          </div>
+
+          <!-- Section 1: Income -->
+          <div class="payslip-section-title"><i class="fas fa-plus-circle" style="color:var(--success)"></i> Các Khoản Thu Nhập</div>
+          <div class="payslip-row">
+            <span>Lương cơ bản <small style="color:var(--text-muted)" id="rowWorkNote"></small></span>
+            <strong id="rowBaseSalary">0 ₫</strong>
+          </div>
+          <div class="payslip-row" id="rowHolidayBonusWrap" style="display:none">
+            <span>Thưởng ngày lễ</span>
+            <strong id="rowHolidayBonus" style="color:var(--success)">0 ₫</strong>
+          </div>
+          <div class="payslip-row">
+            <span>Phụ cấp (Ăn uống, xăng xe, khác)</span>
+            <strong id="rowAllowances">0 ₫</strong>
+          </div>
+          <div class="payslip-row" id="rowBonusWrap" style="display:none">
+            <span>Thưởng thêm <small style="color:var(--text-muted)" id="rowBonusNote"></small></span>
+            <strong id="rowBonus" style="color:var(--success)">0 ₫</strong>
+          </div>
+          <div class="payslip-row total">
+            <span>TỔNG THU NHẬP (GROSS)</span>
+            <strong id="rowGrossSalary" style="color:var(--success)">0 ₫</strong>
+          </div>
+
+          <!-- Section 2: Deductions -->
+          <div class="payslip-section-title"><i class="fas fa-minus-circle" style="color:var(--danger)"></i> Khấu Trừ & Phạt</div>
+          <div class="payslip-row">
+            <span>Trừ đi muộn / về sớm <small style="color:var(--text-muted)" id="rowLateDetail"></small></span>
+            <strong id="rowLateDeduction" style="color:var(--danger)">-0 ₫</strong>
+          </div>
+          <div class="payslip-row" id="rowOtherDeductionWrap" style="display:none">
+            <span>Khấu trừ khác <small style="color:var(--text-muted)" id="rowOtherDeductionNote"></small></span>
+            <strong id="rowOtherDeduction" style="color:var(--danger)">-0 ₫</strong>
+          </div>
+
+          <div class="payslip-row total">
+            <span>TỔNG KHẤU TRỪ</span>
+            <strong id="rowTotalDeductions" style="color:var(--danger)">-0 ₫</strong>
+          </div>
+
+          <!-- Section 3: Net Salary -->
+          <div class="payslip-row grand-total">
+            <span>THỰC LĨNH THÁNG</span>
+            <span id="rowNetSalary">0 ₫</span>
+          </div>
+
+          <div style="margin-top:20px;text-align:center;font-size:12.5px;color:var(--text-muted)">
+            <i class="fas fa-info-circle"></i> Nếu có thắc mắc về bảng lương, vui lòng liên hệ Quản lý trước ngày 05 hàng tháng.
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/payroll.js"></script>
+  <script src="js/export.js"></script>
+  <script>
+    seedData();
+    const session = requireAuth();
+    let currentMonthStr = Utils.currentMonth();
+
+    if (session) {
+      document.getElementById('sidebarName').textContent = session.name;
+      document.getElementById('sidebarRole').textContent = (session.role === 'SUPER_ADMIN' ? 'Quản Lý Tổng' : (session.role === 'STORE_MANAGER' ? 'Quản Lý Cơ Sở' : 'Nhân Viên'));
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+
+      if (typeof initHeaderStoreAndNotifications === 'function') {
+        initHeaderStoreAndNotifications(() => {
+          initPage();
+        });
+      }
+      document.getElementById('sidebarAvatar').textContent = Utils.initials(session.name);
+
+      if (session.role !== 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+      } else {
+        const pending = Storage.getPendingAdvances().length;
+        if (pending > 0) {
+          const navAdv = document.getElementById('navAdvances');
+          if (navAdv) navAdv.innerHTML += `<span class="nav-badge">${pending}</span>`;
+        }
+      }
+
+      initSidebar();
+      initPage();
+    }
+
+    function initPage() {
+      const monthSel = document.getElementById('monthSelector');
+      monthSel.value = currentMonthStr;
+      monthSel.addEventListener('change', (e) => {
+        currentMonthStr = e.target.value;
+        renderMyPayroll();
+      });
+      renderMyPayroll();
+    }
+
+    function renderMyPayroll() {
+      const empId = session.employeeId;
+      const emp = Storage.getEmployee(empId);
+      if (!emp) return;
+
+      let p = Storage.getPayroll(empId, currentMonthStr);
+      if (!p) {
+        p = Payroll.calculate(empId, currentMonthStr);
+      }
+      if (!p) return;
+
+      const policy = Storage.getSettings().latePolicy || { freePassesPerMonth: 5, deductionPerOccurrence: 50000 };
+
+      // Header
+      document.getElementById('payslipTitle').textContent = `PHIẾU LƯƠNG — ${emp.name.toUpperCase()}`;
+      document.getElementById('payslipSub').textContent = `Mã NV: ${emp.code || '---'} | Tháng ${currentMonthStr}`;
+
+      const isPaid = p.status === 'paid';
+      document.getElementById('payslipBadge').innerHTML = isPaid
+        ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Đã chi trả</span>'
+        : '<span class="badge badge-warning"><i class="fas fa-clock"></i> Chờ chi trả</span>';
+      document.getElementById('statStatusBadge').textContent = isPaid ? '✓ Đã chi trả' : '⏳ Chờ chi trả';
+
+      // Stats
+      document.getElementById('statNetPay').textContent = Utils.currency(p.netSalary);
+      document.getElementById('statBasePlusAllow').textContent = Utils.currency((p.baseSalary || 0) + (p.totalAllowances || 0));
+      document.getElementById('statWorkNote').textContent = `${p.workDays || 0} ngày công (${(p.totalWorkHours || 0).toFixed(1)}h)`;
+      document.getElementById('statPenalty').textContent = Utils.currency((p.lateDeduction || 0) + (p.otherDeductions || 0));
+      document.getElementById('statLateNote').textContent = `${p.lateCount || 0} lần muộn/sớm (${p.lateViolationCount || 0} lần phạt)`;
+      document.getElementById('statAdvances').textContent = Utils.currency(p.totalAdvances || 0);
+      document.getElementById('statAdvancesCount').textContent = `${(p.advances || []).length} khoản đã duyệt`;
+
+      // Breakdown - Income
+      document.getElementById('rowWorkNote').textContent = `(${p.workNote || `${p.workDays} ngày`})`;
+      document.getElementById('rowBaseSalary').textContent = Utils.currency(p.baseSalary || 0);
+
+      if (p.holidayBonus > 0) {
+        document.getElementById('rowHolidayBonusWrap').style.display = 'flex';
+        document.getElementById('rowHolidayBonus').textContent = Utils.currency(p.holidayBonus);
+      } else {
+        document.getElementById('rowHolidayBonusWrap').style.display = 'none';
+      }
+
+      document.getElementById('rowAllowances').textContent = Utils.currency(p.totalAllowances || 0);
+
+      if (p.bonus > 0) {
+        document.getElementById('rowBonusWrap').style.display = 'flex';
+        document.getElementById('rowBonusNote').textContent = p.bonusNote ? `(${p.bonusNote})` : '';
+        document.getElementById('rowBonus').textContent = Utils.currency(p.bonus);
+      } else {
+        document.getElementById('rowBonusWrap').style.display = 'none';
+      }
+
+      document.getElementById('rowGrossSalary').textContent = Utils.currency(p.grossSalary || 0);
+
+      // Breakdown - Deductions
+      const freePasses = policy.freePassesPerMonth || 5;
+      const penRate = policy.deductionPerOccurrence || 50000;
+      document.getElementById('rowLateDetail').textContent = `(Muộn/sớm: ${p.lateCount || 0} lần, miễn ${freePasses} lần, phạt ${p.lateViolationCount || 0} lần × ${Utils.currency(penRate)})`;
+      document.getElementById('rowLateDeduction').textContent = '-' + Utils.currency(p.lateDeduction || 0);
+
+      if (p.otherDeductions > 0) {
+        document.getElementById('rowOtherDeductionWrap').style.display = 'flex';
+        document.getElementById('rowOtherDeductionNote').textContent = p.otherDeductionsNote ? `(${p.otherDeductionsNote})` : '';
+        document.getElementById('rowOtherDeduction').textContent = '-' + Utils.currency(p.otherDeductions);
+      } else {
+        document.getElementById('rowOtherDeductionWrap').style.display = 'none';
+      }
+
+      document.getElementById('rowTotalDeductions').textContent = '-' + Utils.currency(p.totalDeductions || 0);
+
+      // Net Salary
+      document.getElementById('rowNetSalary').textContent = Utils.currency(p.netSalary || 0);
+    }
+
+    function exportPDF() {
+      if (typeof Export !== 'undefined' && typeof Export.payslipPDF === 'function') {
+        Export.payslipPDF(session.employeeId, currentMonthStr);
+      } else {
+        Toast.info('Tính năng đang tải...');
+      }
+    }
+  </script>
+</body>
+</html>
